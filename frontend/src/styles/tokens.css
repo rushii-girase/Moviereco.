@@ -1,0 +1,95 @@
+/* INDEX 0 Design Tokens */
+:root {
+  /* Surface Colors */
+  --color-surface-base: #000000;
+  --color-surface-muted: #0b0e13;
+  --color-surface-raised: #10141b;
+
+  /* Text Colors */
+  --color-text-primary: #9aa4b2;
+  --color-text-secondary: #eef1f5;
+  --color-text-tertiary: #626c7a;
+  --color-text-inverse: #1cd6ac;
+
+  /* Border Colors */
+  --color-border-strong: #ffffff;
+  --color-border-subtle: #1d2430;
+  --color-focus-ring: #ffffff;
+
+  /* State Colors */
+  --color-state-error: #ff6b6b;
+  --color-state-success: #1cd6ac;
+
+  /* Typography */
+  --font-family-stack: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-size-xs: 10.5px;
+  --font-size-sm: 11.5px;
+  --font-size-base: 13.6px;
+  --font-size-lg: 16px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 28px;
+  --line-height-base: 21.08px;
+
+  /* Spacing Scale */
+  --space-1: 1px;
+  --space-2: 2px;
+  --space-3: 4px;
+  --space-4: 6px;
+  --space-5: 7px;
+  --space-6: 8px;
+  --space-7: 10px;
+  --space-8: 11px;
+  --space-9: 12px;
+  --space-10: 16px;
+  --space-11: 24px;
+  --space-12: 32px;
+  --space-13: 48px;
+
+  /* Border Radius */
+  --radius-xs: 7px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  /* Layout & Motion */
+  --layout-max-width: 1200px;
+  --motion-duration-instant: 150ms;
+}
+
+/* Base Styles & Resets */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--color-surface-base);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-stack);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+a {
+  color: var(--color-text-inverse);
+  text-decoration: none;
+  transition: color var(--motion-duration-instant) ease;
+}
+
+a:hover {
+  color: var(--color-text-secondary);
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* Accessibility Focus Ring */
+:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
