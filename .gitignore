@@ -41,3 +41,11 @@ target/
 # Temporary & system generated
 .system_generated/
 scratch/
+
+# Skills & local agent configurations
+.agents/
+
+# Product requirements & internal documentation
+Movie Suggestion App — Frontend + Backend PRD.md
+*PRD*.md
+
