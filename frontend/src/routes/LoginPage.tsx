@@ -1,15 +1,23 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
+import { Film } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
   const [isRegister, setIsRegister] = useState(false);
+
   const [name, setName] = useState('');
+
   const [email, setEmail] = useState('');
+
   const [password, setPassword] = useState('');
+
   const [localError, setLocalError] = useState('');
+
   const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
+
   const { login, register, error, clearError } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -17,18 +25,24 @@ export const LoginPage: React.FC = () => {
     setLocalError('');
     clearError();
     setLoading(true);
+
     try {
       if (isRegister) {
         await register(name, email, password);
       } else {
         await login(email, password);
       }
+
       navigate('/');
-    } catch (err: any) {
-      if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
-        setLocalError('Unable to connect to backend server. Make sure Spring Boot backend is running on http://localhost:8080');
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
+          setLocalError('Unable to connect to backend server. Make sure Spring Boot is running on port 8080.');
+        } else {
+          setLocalError(err.message);
+        }
       } else {
-        setLocalError(err.message || 'Something went wrong');
+        setLocalError('Authentication request failed.');
       }
     } finally {
       setLoading(false);
@@ -38,93 +52,161 @@ export const LoginPage: React.FC = () => {
   const displayError = localError || error;
 
   return (
-    <div style={{ maxWidth: '420px', margin: '64px auto', padding: 'var(--space-10)' }}>
+    <div style={{ maxWidth: '440px', margin: '48px auto', padding: 'var(--space-6)' }}>
       <div
         style={{
-          backgroundColor: 'var(--color-surface-raised)',
+          backgroundColor: 'var(--color-surface-card)',
           border: '1px solid var(--color-border-subtle)',
-          borderRadius: 'var(--radius-lg)',
-          padding: 'var(--space-12)',
+          borderRadius: 'var(--radius-xl)',
+          padding: 'var(--space-12) var(--space-10)',
+          boxShadow: 'var(--shadow-elevation)',
         }}
       >
-        <h1 style={{ fontSize: 'var(--font-size-xl)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-6)', textAlign: 'center' }}>
-          {isRegister ? 'Create Account' : 'Sign In'}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 'var(--space-6)' }}>
+          <Film size={32} style={{ color: 'var(--color-accent-gold)' }} />
+        </div>
+
+        <h1
+          style={{
+            fontFamily: 'var(--font-family-display)',
+            fontSize: 'var(--font-size-2xl)',
+            color: 'var(--color-text-secondary)',
+            marginBottom: 'var(--space-2)',
+            textAlign: 'center',
+            letterSpacing: '0.04em',
+          }}
+        >
+          {isRegister ? 'Join the Cinematheque' : 'Sign In'}
         </h1>
-        <p style={{ textAlign: 'center', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-tertiary)', marginBottom: 'var(--space-10)' }}>
-          {isRegister ? 'Join MovieReco to save your watchlist and ratings' : 'Welcome back, cinephile'}
+
+        <p
+          style={{
+            textAlign: 'center',
+            fontSize: 'var(--font-size-sm)',
+            color: 'var(--color-text-tertiary)',
+            marginBottom: 'var(--space-9)',
+          }}
+        >
+          {isRegister
+            ? 'Create an account to save personal watchlists, ratings, and custom anthologies.'
+            : 'Welcome back to your personal cinema archive.'}
         </p>
 
         {displayError && (
-          <div style={{
-            backgroundColor: 'rgba(255,107,107,0.1)',
-            border: '1px solid var(--color-state-error)',
-            borderRadius: 'var(--radius-sm)',
-            padding: 'var(--space-6) var(--space-8)',
-            marginBottom: 'var(--space-8)',
-            color: 'var(--color-state-error)',
-            fontSize: 'var(--font-size-sm)',
-          }}>
+          <div
+            style={{
+              backgroundColor: 'rgba(248, 113, 113, 0.12)',
+              border: '1px solid rgba(248, 113, 113, 0.35)',
+              borderRadius: 'var(--radius-sm)',
+              padding: '10px 14px',
+              color: 'var(--color-state-error)',
+              fontSize: 'var(--font-size-xs)',
+              marginBottom: 'var(--space-6)',
+              lineHeight: 1.5,
+            }}
+          >
             {displayError}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-8)' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
           {isRegister && (
             <div>
-              <label style={{ display: 'block', marginBottom: '4px', fontSize: 'var(--font-size-sm)' }}>Name</label>
+              <label
+                htmlFor="name"
+                style={{
+                  display: 'block',
+                  fontSize: 'var(--font-size-xs)',
+                  color: 'var(--color-text-primary)',
+                  marginBottom: 'var(--space-2)',
+                  fontWeight: 600,
+                }}
+              >
+                Full Name
+              </label>
               <input
+                id="name"
                 type="text"
-                required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Your name"
+                placeholder="François Truffaut"
+                required
                 style={{
                   width: '100%',
+                  padding: '11px 14px',
                   backgroundColor: 'var(--color-surface-muted)',
                   border: '1px solid var(--color-border-subtle)',
                   borderRadius: 'var(--radius-sm)',
-                  padding: 'var(--space-6) var(--space-8)',
                   color: 'var(--color-text-secondary)',
+                  fontSize: 'var(--font-size-sm)',
+                  outline: 'none',
                 }}
               />
             </div>
           )}
 
           <div>
-            <label style={{ display: 'block', marginBottom: '4px', fontSize: 'var(--font-size-sm)' }}>Email</label>
+            <label
+              htmlFor="email"
+              style={{
+                display: 'block',
+                fontSize: 'var(--font-size-xs)',
+                color: 'var(--color-text-primary)',
+                marginBottom: 'var(--space-2)',
+                fontWeight: 600,
+              }}
+            >
+              Email Address
+            </label>
             <input
+              id="email"
               type="email"
-              required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
+              placeholder="cinephile@cinema.org"
+              required
               style={{
                 width: '100%',
+                padding: '11px 14px',
                 backgroundColor: 'var(--color-surface-muted)',
                 border: '1px solid var(--color-border-subtle)',
                 borderRadius: 'var(--radius-sm)',
-                padding: 'var(--space-6) var(--space-8)',
                 color: 'var(--color-text-secondary)',
+                fontSize: 'var(--font-size-sm)',
+                outline: 'none',
               }}
             />
           </div>
 
           <div>
-            <label style={{ display: 'block', marginBottom: '4px', fontSize: 'var(--font-size-sm)' }}>Password</label>
+            <label
+              htmlFor="password"
+              style={{
+                display: 'block',
+                fontSize: 'var(--font-size-xs)',
+                color: 'var(--color-text-primary)',
+                marginBottom: 'var(--space-2)',
+                fontWeight: 600,
+              }}
+            >
+              Password
+            </label>
             <input
+              id="password"
               type="password"
-              required
-              minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Min. 6 characters"
+              placeholder="••••••••"
+              required
               style={{
                 width: '100%',
+                padding: '11px 14px',
                 backgroundColor: 'var(--color-surface-muted)',
                 border: '1px solid var(--color-border-subtle)',
                 borderRadius: 'var(--radius-sm)',
-                padding: 'var(--space-6) var(--space-8)',
                 color: 'var(--color-text-secondary)',
+                fontSize: 'var(--font-size-sm)',
+                outline: 'none',
               }}
             />
           </div>
@@ -133,34 +215,44 @@ export const LoginPage: React.FC = () => {
             type="submit"
             disabled={loading}
             style={{
-              backgroundColor: 'var(--color-text-inverse)',
-              color: 'var(--color-surface-base)',
+              marginTop: 'var(--space-4)',
+              padding: '12px var(--space-6)',
+              backgroundColor: 'var(--color-accent-gold)',
+              color: '#08090b',
+              fontWeight: 700,
+              fontSize: 'var(--font-size-sm)',
+              borderRadius: 'var(--radius-pill)',
               border: 'none',
-              borderRadius: 'var(--radius-sm)',
-              padding: '12px',
-              fontWeight: 600,
               cursor: loading ? 'not-allowed' : 'pointer',
-              marginTop: '8px',
               opacity: loading ? 0.7 : 1,
+              transition: 'all var(--motion-duration-instant) ease',
+              boxShadow: '0 4px 16px rgba(229, 169, 60, 0.3)',
             }}
           >
-            {loading ? 'Loading…' : isRegister ? 'Create Account' : 'Sign In'}
+            {loading ? 'Processing...' : isRegister ? 'Create Account' : 'Sign In'}
           </button>
         </form>
 
-        <div style={{ textAlign: 'center', marginTop: 'var(--space-10)', fontSize: 'var(--font-size-sm)' }}>
-          <span style={{ color: 'var(--color-text-tertiary)' }}>
-            {isRegister ? 'Already have an account? ' : "Don't have an account? "}
-          </span>
+        <div style={{ textAlign: 'center', marginTop: 'var(--space-8)' }}>
           <button
-            onClick={() => { setIsRegister(!isRegister); setLocalError(''); clearError(); }}
+            type="button"
+            onClick={() => {
+              setIsRegister(!isRegister);
+              setLocalError('');
+              clearError();
+            }}
             style={{
-              background: 'none', border: 'none',
-              color: 'var(--color-text-inverse)', cursor: 'pointer',
-              fontWeight: 600, fontSize: 'var(--font-size-sm)',
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--color-text-primary)',
+              fontSize: 'var(--font-size-xs)',
+              cursor: 'pointer',
+              textDecoration: 'underline',
             }}
           >
-            {isRegister ? 'Sign In' : 'Create Account'}
+            {isRegister
+              ? 'Already possess an account? Sign In'
+              : 'New to MovieReco? Create an Account'}
           </button>
         </div>
       </div>

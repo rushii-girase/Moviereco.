@@ -1,305 +1,286 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { discoverMedia, fetchGenres } from '../api/tmdb';
 import type { Genre } from '../api/tmdb';
 import { MovieGrid } from '../components/MovieGrid/MovieGrid';
 import type { Movie } from '../components/MovieCard/MovieCard';
-import { Filter, Search, Dices, Tv, Film } from 'lucide-react';
+import { Film, Tv, Dices, RotateCcw } from 'lucide-react';
+import styles from './DiscoverPage.module.css';
 
 export const DiscoverPage: React.FC = () => {
   const [mediaType, setMediaType] = useState<'movie' | 'tv'>('movie');
+
   const [genres, setGenres] = useState<Genre[]>([]);
+
   const [selectedGenre, setSelectedGenre] = useState<string>('');
+
   const [selectedYear, setSelectedYear] = useState<string>('');
+
   const [minRating, setMinRating] = useState<string>('');
+
   const [language, setLanguage] = useState<string>('');
-  const [country, setCountry] = useState<string>('');
-  const [query, setQuery] = useState<string>('');
 
   const [movies, setMovies] = useState<Movie[]>([]);
+
   const [loading, setLoading] = useState(true);
+
   const [wishlistIds, setWishlistIds] = useState<number[]>(() => {
     const saved = localStorage.getItem('wishlist');
-    return saved ? JSON.parse(saved) : [];
+
+    if (!saved) {
+      return [];
+    }
+
+    try {
+      return JSON.parse(saved);
+    } catch {
+      return [];
+    }
   });
 
+  // Load genres when mediaType changes
   useEffect(() => {
-    fetchGenres(mediaType).then(setGenres).catch(console.error);
+    let isMounted = true;
+
+    fetchGenres(mediaType)
+      .then((data) => {
+        if (isMounted) {
+          setGenres(data);
+        }
+      })
+      .catch(console.error);
+
+    return () => {
+      isMounted = false;
+    };
   }, [mediaType]);
 
-  const handleSearch = async (e?: React.FormEvent, random = false) => {
-    if (e) e.preventDefault();
-    setLoading(true);
-    try {
-      const data = await discoverMedia({
-        mediaType,
-        genreId: selectedGenre,
-        year: selectedYear,
-        minRating,
-        language,
-        country,
-        query,
-        random,
-      });
-      setMovies(data.results);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const executeSearch = useCallback(
+    async (random = false) => {
+      setLoading(true);
+
+      try {
+        const data = await discoverMedia({
+          mediaType,
+          genreId: selectedGenre || undefined,
+          year: selectedYear || undefined,
+          minRating: minRating || undefined,
+          language: language || undefined,
+          random,
+        });
+
+        setMovies(data.results);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [mediaType, selectedGenre, selectedYear, minRating, language],
+  );
 
   useEffect(() => {
-    handleSearch();
-  }, [mediaType, selectedGenre, selectedYear, minRating, language, country]);
+    let ignore = false;
+
+    discoverMedia({
+      mediaType,
+      genreId: selectedGenre || undefined,
+      year: selectedYear || undefined,
+      minRating: minRating || undefined,
+      language: language || undefined,
+    })
+      .then((data) => {
+        if (!ignore) {
+          setMovies(data.results);
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+      })
+      .finally(() => {
+        if (!ignore) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [mediaType, selectedGenre, selectedYear, minRating, language]);
 
   const handleToggleWishlist = (movieId: number, e: React.MouseEvent) => {
     e.preventDefault();
+
     setWishlistIds((prev) => {
-      const updated = prev.includes(movieId)
+      const isPresent = prev.includes(movieId);
+
+      const updated = isPresent
         ? prev.filter((id) => id !== movieId)
         : [...prev, movieId];
+
       localStorage.setItem('wishlist', JSON.stringify(updated));
+
       return updated;
     });
   };
 
+  const handleResetFilters = () => {
+    setSelectedGenre('');
+    setSelectedYear('');
+    setMinRating('');
+    setLanguage('');
+  };
+
+  const hasActiveFilters = Boolean(selectedGenre || selectedYear || minRating || language);
+
   return (
-    <div style={{ maxWidth: 'var(--layout-max-width)', margin: '0 auto', padding: 'var(--space-10)' }}>
-      {/* Header & Media Toggle */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-10)', flexWrap: 'wrap', gap: '16px' }}>
-        <h1 style={{ fontSize: 'var(--font-size-2xl)', color: 'var(--color-text-secondary)', margin: 0 }}>
-          Discover {mediaType === 'movie' ? 'Movies' : 'TV Shows & Series'}
-        </h1>
+    <div className={styles.container}>
+      <header className={styles.header}>
+        <div className={styles.titleArea}>
+          <h1 className={styles.title}>Cinema Discovery Lab</h1>
+          <p className={styles.subtitle}>
+            Explore thousands of cinematic works across decades, genres, and world languages.
+          </p>
+        </div>
 
-        <div style={{ display: 'flex', backgroundColor: 'var(--color-surface-raised)', borderRadius: 'var(--radius-sm)', padding: '4px', border: '1px solid var(--color-border-subtle)' }}>
+        <div className={styles.mediaToggle} role="group" aria-label="Media format selector">
           <button
-            onClick={() => setMediaType('movie')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '6px 16px',
-              borderRadius: 'var(--radius-xs)',
-              border: 'none',
-              backgroundColor: mediaType === 'movie' ? 'var(--color-text-inverse)' : 'transparent',
-              color: mediaType === 'movie' ? 'var(--color-surface-base)' : 'var(--color-text-primary)',
-              fontWeight: 600,
-              cursor: 'pointer',
+            type="button"
+            className={`${styles.toggleBtn} ${mediaType === 'movie' ? styles.active : ''}`}
+            onClick={() => {
+              setMediaType('movie');
+              setSelectedGenre('');
             }}
           >
-            <Film size={16} /> Movies
+            <Film size={14} />
+            <span>Feature Films</span>
           </button>
+
           <button
-            onClick={() => setMediaType('tv')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '6px 16px',
-              borderRadius: 'var(--radius-xs)',
-              border: 'none',
-              backgroundColor: mediaType === 'tv' ? 'var(--color-text-inverse)' : 'transparent',
-              color: mediaType === 'tv' ? 'var(--color-surface-base)' : 'var(--color-text-primary)',
-              fontWeight: 600,
-              cursor: 'pointer',
+            type="button"
+            className={`${styles.toggleBtn} ${mediaType === 'tv' ? styles.active : ''}`}
+            onClick={() => {
+              setMediaType('tv');
+              setSelectedGenre('');
             }}
           >
-            <Tv size={16} /> TV Shows & Series
+            <Tv size={14} />
+            <span>Series &amp; TV</span>
           </button>
         </div>
-      </div>
+      </header>
 
-      {/* Random 20 Refresh Bar */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '16px',
-          backgroundColor: 'var(--color-surface-raised)',
-          border: '1px solid var(--color-text-inverse)',
-          borderRadius: 'var(--radius-md)',
-          padding: '16px',
-          marginBottom: 'var(--space-10)',
-          flexWrap: 'wrap',
-        }}
-      >
-        <button
-          onClick={() => handleSearch(undefined, true)}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            backgroundColor: 'var(--color-text-inverse)',
-            color: 'var(--color-surface-base)',
-            border: 'none',
-            borderRadius: 'var(--radius-sm)',
-            padding: '10px 20px',
-            fontWeight: 700,
-            cursor: 'pointer',
-          }}
-        >
-          <Dices size={18} /> Refresh Random 20 {mediaType === 'movie' ? 'Movies' : 'Shows'}
-        </button>
+      {/* Filter Console */}
+      <section className={styles.filterConsole} aria-label="Discovery Filters">
+        {/* Genre Pill Rack */}
+        <div className={styles.genreRack} role="group" aria-label="Select Genre">
+          <button
+            type="button"
+            className={`${styles.genrePill} ${selectedGenre === '' ? styles.active : ''}`}
+            onClick={() => setSelectedGenre('')}
+          >
+            All Genres
+          </button>
 
-        <span style={{ color: 'var(--color-text-primary)', fontSize: 'var(--font-size-sm)' }}>Quick Genre:</span>
-        <select
-          value={selectedGenre}
-          onChange={(e) => setSelectedGenre(e.target.value)}
-          style={{
-            backgroundColor: 'var(--color-surface-muted)',
-            color: 'var(--color-text-secondary)',
-            border: '1px solid var(--color-border-subtle)',
-            borderRadius: 'var(--radius-sm)',
-            padding: '8px 12px',
-          }}
-        >
-          <option value="">All Genres</option>
           {genres.map((g) => (
-            <option key={g.id} value={g.id.toString()}>
+            <button
+              key={g.id}
+              type="button"
+              className={`${styles.genrePill} ${selectedGenre === String(g.id) ? styles.active : ''}`}
+              onClick={() => setSelectedGenre(selectedGenre === String(g.id) ? '' : String(g.id))}
+            >
               {g.name}
-            </option>
+            </button>
           ))}
-        </select>
-      </div>
-
-      {/* Filter Bar */}
-      <div
-        style={{
-          backgroundColor: 'var(--color-surface-raised)',
-          border: '1px solid var(--color-border-subtle)',
-          borderRadius: 'var(--radius-md)',
-          padding: 'var(--space-10)',
-          marginBottom: 'var(--space-12)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 'var(--space-8)',
-        }}
-      >
-        <form onSubmit={(e) => handleSearch(e)} style={{ display: 'flex', gap: 'var(--space-6)' }}>
-          <div style={{ position: 'relative', flexGrow: 1 }}>
-            <input
-              type="text"
-              placeholder={`Search ${mediaType === 'movie' ? 'movies, actors, or directors...' : 'TV shows & series...'}`}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              style={{
-                width: '100%',
-                backgroundColor: 'var(--color-surface-muted)',
-                border: '1px solid var(--color-border-subtle)',
-                borderRadius: 'var(--radius-sm)',
-                padding: 'var(--space-6) var(--space-10)',
-                color: 'var(--color-text-secondary)',
-              }}
-            />
-          </div>
-          <button
-            type="submit"
-            style={{
-              backgroundColor: 'var(--color-text-inverse)',
-              color: 'var(--color-surface-base)',
-              border: 'none',
-              borderRadius: 'var(--radius-sm)',
-              padding: '0 var(--space-10)',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}
-          >
-            <Search size={16} /> Search
-          </button>
-        </form>
-
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-8)', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--color-text-primary)' }}>
-            <Filter size={16} /> Advanced Filters:
-          </div>
-
-          {/* Year Filter */}
-          <select
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(e.target.value)}
-            style={{
-              backgroundColor: 'var(--color-surface-muted)',
-              color: 'var(--color-text-secondary)',
-              border: '1px solid var(--color-border-subtle)',
-              borderRadius: 'var(--radius-sm)',
-              padding: 'var(--space-4) var(--space-6)',
-            }}
-          >
-            <option value="">Release Year</option>
-            {Array.from({ length: 35 }, (_, i) => (2026 - i).toString()).map((year) => (
-              <option key={year} value={year}>
-                {year}
-              </option>
-            ))}
-          </select>
-
-          {/* Rating Filter */}
-          <select
-            value={minRating}
-            onChange={(e) => setMinRating(e.target.value)}
-            style={{
-              backgroundColor: 'var(--color-surface-muted)',
-              color: 'var(--color-text-secondary)',
-              border: '1px solid var(--color-border-subtle)',
-              borderRadius: 'var(--radius-sm)',
-              padding: 'var(--space-4) var(--space-6)',
-            }}
-          >
-            <option value="">Min Rating</option>
-            <option value="8">8+ Stars ⭐</option>
-            <option value="7">7+ Stars ⭐</option>
-            <option value="6">6+ Stars ⭐</option>
-          </select>
-
-          {/* Language Filter */}
-          <select
-            value={language}
-            onChange={(e) => setLanguage(e.target.value)}
-            style={{
-              backgroundColor: 'var(--color-surface-muted)',
-              color: 'var(--color-text-secondary)',
-              border: '1px solid var(--color-border-subtle)',
-              borderRadius: 'var(--radius-sm)',
-              padding: 'var(--space-4) var(--space-6)',
-            }}
-          >
-            <option value="">Language</option>
-            <option value="en">English 🇬🇧</option>
-            <option value="hi">Hindi 🇮🇳</option>
-            <option value="ja">Japanese 🇯🇵</option>
-            <option value="ko">Korean 🇰🇷</option>
-            <option value="es">Spanish 🇪🇸</option>
-            <option value="fr">French 🇫🇷</option>
-            <option value="de">German 🇩🇪</option>
-          </select>
-
-          {/* Country Filter */}
-          <select
-            value={country}
-            onChange={(e) => setCountry(e.target.value)}
-            style={{
-              backgroundColor: 'var(--color-surface-muted)',
-              color: 'var(--color-text-secondary)',
-              border: '1px solid var(--color-border-subtle)',
-              borderRadius: 'var(--radius-sm)',
-              padding: 'var(--space-4) var(--space-6)',
-            }}
-          >
-            <option value="">Origin Country</option>
-            <option value="US">United States 🇺🇸</option>
-            <option value="IN">India 🇮🇳</option>
-            <option value="JP">Japan 🇯🇵</option>
-            <option value="GB">United Kingdom 🇬🇧</option>
-            <option value="KR">South Korea 🇰🇷</option>
-            <option value="FR">France 🇫🇷</option>
-          </select>
         </div>
+
+        {/* Dropdowns & Roulette Row */}
+        <div className={styles.controlsRow}>
+          <div className={styles.dropdownGroup}>
+            <select
+              className={styles.select}
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(e.target.value)}
+              aria-label="Filter by release year or decade"
+            >
+              <option value="">Any Year</option>
+              <option value="2026">2026</option>
+              <option value="2025">2025</option>
+              <option value="2024">2024</option>
+              <option value="2023">2023</option>
+              <option value="2020">2020s</option>
+              <option value="2010">2010s</option>
+              <option value="2000">2000s</option>
+              <option value="1990">1990s</option>
+              <option value="1980">1980s</option>
+              <option value="1970">1970s</option>
+              <option value="1960">1960s</option>
+              <option value="1950">1950s &amp; Classic</option>
+            </select>
+
+            <select
+              className={styles.select}
+              value={minRating}
+              onChange={(e) => setMinRating(e.target.value)}
+              aria-label="Filter by minimum score"
+            >
+              <option value="">Any Score</option>
+              <option value="8.5">8.5+ Masterpiece</option>
+              <option value="8">8.0+ Critical Acclaim</option>
+              <option value="7.5">7.5+ Highly Regarded</option>
+              <option value="7">7.0+ Recommended</option>
+              <option value="6">6.0+ Decent</option>
+            </select>
+
+            <select
+              className={styles.select}
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+              aria-label="Filter by original language"
+            >
+              <option value="">All Languages</option>
+              <option value="en">English</option>
+              <option value="fr">French (Français)</option>
+              <option value="ja">Japanese (日本語)</option>
+              <option value="ko">Korean (한국어)</option>
+              <option value="it">Italian (Italiano)</option>
+              <option value="es">Spanish (Español)</option>
+              <option value="de">German (Deutsch)</option>
+              <option value="hi">Hindi (हिन्दी)</option>
+              <option value="zh">Chinese (中文)</option>
+              <option value="sv">Swedish (Svenska)</option>
+            </select>
+
+            {hasActiveFilters && (
+              <button
+                type="button"
+                className={styles.select}
+                onClick={handleResetFilters}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+              >
+                <RotateCcw size={12} />
+                <span>Reset</span>
+              </button>
+            )}
+          </div>
+
+          <button
+            type="button"
+            className={styles.rouletteBtn}
+            onClick={() => executeSearch(true)}
+            title="Spin the cinema roulette for a random critically acclaimed film"
+          >
+            <Dices size={16} />
+            <span>Cinema Roulette</span>
+          </button>
+        </div>
+      </section>
+
+      {/* Results Header */}
+      <div className={styles.resultsMeta}>
+        <span>Showing {movies.length} {mediaType === 'tv' ? 'series' : 'titles'}</span>
       </div>
 
-      {/* Grid Results */}
+      {/* Grid */}
       <MovieGrid
         movies={movies}
         isLoading={loading}

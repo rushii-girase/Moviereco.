@@ -35,6 +35,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/tmdb/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/ratings/community/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/lists/shared/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .requestMatchers("/api/**").authenticated()

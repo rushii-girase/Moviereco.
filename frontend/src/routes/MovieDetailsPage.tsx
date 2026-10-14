@@ -3,362 +3,408 @@ import { useParams, Link } from 'react-router-dom';
 import { fetchMovieDetails, fetchCollectionDetails } from '../api/tmdb';
 import type { MovieDetails, CollectionPart } from '../api/tmdb';
 import { PersonModal } from '../components/PersonModal/PersonModal';
-import { Star, Clock, Calendar, Bookmark, ArrowLeft, Play, Tv, Layers } from 'lucide-react';
+import { RatingModal } from '../components/RatingModal/RatingModal';
+import { Star, Clock, Calendar, Bookmark, Play, X, User } from 'lucide-react';
+import styles from './MovieDetailsPage.module.css';
 
 export const MovieDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+
   const [movie, setMovie] = useState<MovieDetails | null>(null);
+
   const [collectionParts, setCollectionParts] = useState<CollectionPart[]>([]);
+
   const [loading, setLoading] = useState(true);
-  const [isInWishlist, setIsInWishlist] = useState(false);
+
   const [showTrailerModal, setShowTrailerModal] = useState(false);
+
+  const [showRatingModal, setShowRatingModal] = useState(false);
+
   const [selectedPersonId, setSelectedPersonId] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (!id) return;
+  const [isInWishlist, setIsInWishlist] = useState<boolean>(() => {
+    if (!id) {
+      return false;
+    }
+
     const saved = localStorage.getItem('wishlist');
-    const wishlistIds: number[] = saved ? JSON.parse(saved) : [];
-    setIsInWishlist(wishlistIds.includes(parseInt(id)));
+
+    if (!saved) {
+      return false;
+    }
+
+    try {
+      const wishlistIds: number[] = JSON.parse(saved);
+
+      return wishlistIds.includes(parseInt(id, 10));
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    if (!id) {
+      return;
+    }
+
+    let isMounted = true;
 
     fetchMovieDetails(id, 'movie')
       .then(async (data) => {
+        if (!isMounted) {
+          return;
+        }
+
         setMovie(data);
+
         if (data.belongs_to_collection?.id) {
-          fetchCollectionDetails(data.belongs_to_collection.id).then(setCollectionParts).catch(console.error);
+          fetchCollectionDetails(data.belongs_to_collection.id)
+            .then((parts) => {
+              if (isMounted) {
+                setCollectionParts(parts);
+              }
+            })
+            .catch(console.error);
         }
       })
       .catch(() => {
-        fetchMovieDetails(id, 'tv').then(setMovie).catch(console.error);
+        fetchMovieDetails(id, 'tv')
+          .then((tvData) => {
+            if (isMounted) {
+              setMovie(tvData);
+            }
+          })
+          .catch(console.error);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (isMounted) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, [id]);
 
   const toggleWishlist = () => {
-    if (!movie) return;
+    if (!movie) {
+      return;
+    }
+
     const saved = localStorage.getItem('wishlist');
     const prev: number[] = saved ? JSON.parse(saved) : [];
+
     const updated = prev.includes(movie.id)
       ? prev.filter((item) => item !== movie.id)
       : [...prev, movie.id];
+
     localStorage.setItem('wishlist', JSON.stringify(updated));
+
     setIsInWishlist(updated.includes(movie.id));
   };
 
   if (loading) {
     return (
-      <div style={{ maxWidth: 'var(--layout-max-width)', margin: '48px auto', padding: '0 24px' }}>
-        <p style={{ color: 'var(--color-text-primary)' }}>Loading details...</p>
+      <div className={styles.page} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: 'var(--color-text-primary)', padding: '64px 0' }}>Loading film details...</p>
       </div>
     );
   }
 
   if (!movie) {
     return (
-      <div style={{ maxWidth: 'var(--layout-max-width)', margin: '48px auto', padding: '0 24px' }}>
-        <p style={{ color: 'var(--color-text-primary)' }}>Details not found.</p>
+      <div className={styles.page} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: 'var(--color-text-primary)', padding: '64px 0' }}>Details not found.</p>
       </div>
     );
   }
 
-  const trailer = movie.videos?.results.find(
-    (v) => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser')
+  const backdropUrl = movie.backdrop_path
+    ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}`
+    : null;
+
+  const posterUrl = movie.poster_path
+    ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+    : null;
+
+  const trailer = movie.videos?.results?.find(
+    (v) => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser'),
   );
 
-  const director = movie.credits?.crew.find((c) => c.job === 'Director');
-  const cinematographer = movie.credits?.crew.find(
-    (c) => c.job === 'Director of Photography' || c.job === 'Cinematographer' || c.department === 'Camera'
+  const releaseYear = (movie.release_date || movie.first_air_date || '').slice(0, 4);
+
+  const director = movie.credits?.crew?.find(
+    (c) => c.job === 'Director',
   );
-  const writers = movie.credits?.crew.filter((c) => c.job === 'Writer' || c.job === 'Screenplay' || c.job === 'Story').slice(0, 3) || [];
-  const producers = movie.credits?.crew.filter((c) => c.job === 'Producer' || c.job === 'Executive Producer').slice(0, 3) || [];
 
-  const watchProviders = movie['watch/providers']?.results?.US?.flatrate || movie['watch/providers']?.results?.IN?.flatrate || [];
+  const writers = movie.credits?.crew?.filter(
+    (c) => c.job === 'Screenplay' || c.job === 'Writer',
+  ) || [];
 
-  const cast = movie.credits?.cast.slice(0, 12) || [];
+  const streamProviders = movie['watch/providers']?.results?.US?.flatrate || [];
+
+  const buyRentProviders = [
+    ...(movie['watch/providers']?.results?.US?.rent || []),
+    ...(movie['watch/providers']?.results?.US?.buy || []),
+  ];
 
   return (
-    <div style={{ maxWidth: 'var(--layout-max-width)', margin: '0 auto', padding: 'var(--space-10)' }}>
-      <Link to="/discover" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginBottom: '24px' }}>
-        <ArrowLeft size={16} /> Back to Discover
-      </Link>
+    <article className={styles.page}>
+      {/* Hero Backdrop Stage */}
+      <div className={styles.backdropStage}>
+        {backdropUrl && (
+          <img
+            src={backdropUrl}
+            alt={movie.title || movie.name}
+            className={styles.backdropImg}
+          />
+        )}
+        <div className={styles.backdropGradient} />
+      </div>
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(250px, 320px) 1fr',
-          gap: 'var(--space-12)',
-          backgroundColor: 'var(--color-surface-raised)',
-          border: '1px solid var(--color-border-subtle)',
-          borderRadius: 'var(--radius-lg)',
-          padding: 'var(--space-12)',
-          marginBottom: 'var(--space-12)',
-        }}
-      >
-        <div style={{ borderRadius: 'var(--radius-md)', overflow: 'hidden', aspectRatio: '2 / 3' }}>
-          {movie.poster_path ? (
-            <img
-              src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
-              alt={`Poster of ${movie.title || movie.name}`}
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            />
-          ) : (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--color-text-tertiary)' }}>
-              No Poster
-            </div>
-          )}
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-8)' }}>
-          <h1 style={{ fontSize: 'var(--font-size-2xl)', color: 'var(--color-text-secondary)' }}>
-            {movie.title || movie.name}
-          </h1>
-
-          {movie.tagline && (
-            <p style={{ fontStyle: 'italic', color: 'var(--color-text-inverse)', fontSize: 'var(--font-size-base)' }}>
-              "{movie.tagline}"
-            </p>
-          )}
-
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-8)', color: 'var(--color-text-primary)' }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--color-text-inverse)', fontWeight: 600 }}>
-              <Star size={16} fill="currentColor" /> {movie.vote_average.toFixed(1)} / 10
-            </span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-              <Calendar size={16} /> {movie.release_date || movie.first_air_date || 'N/A'}
-            </span>
-            {movie.runtime && (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                <Clock size={16} /> {movie.runtime} min
-              </span>
-            )}
-            {movie.number_of_seasons && (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--color-text-inverse)' }}>
-                <Tv size={16} /> {movie.number_of_seasons} Seasons ({movie.number_of_episodes} Episodes)
-              </span>
+      <div className={styles.contentContainer}>
+        {/* Left Column: Poster & Actions */}
+        <aside className={styles.leftCol}>
+          <div className={styles.posterCard}>
+            {posterUrl ? (
+              <img
+                src={posterUrl}
+                alt={`Poster of ${movie.title || movie.name}`}
+                className={styles.posterImg}
+              />
+            ) : (
+              <div className={styles.posterPlaceholder}>No Poster</div>
             )}
           </div>
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-            {movie.genres.map((g) => (
-              <span
-                key={g.id}
-                style={{
-                  backgroundColor: 'var(--color-surface-muted)',
-                  border: '1px solid var(--color-border-subtle)',
-                  borderRadius: 'var(--radius-xs)',
-                  padding: '4px 10px',
-                  fontSize: 'var(--font-size-xs)',
-                  color: 'var(--color-text-secondary)',
-                }}
-              >
-                {g.name}
-              </span>
-            ))}
-          </div>
-
-          <p style={{ color: 'var(--color-text-primary)', lineHeight: 1.6 }}>
-            {movie.overview}
-          </p>
-
-          {watchProviders.length > 0 && (
-            <div style={{ marginTop: '8px' }}>
-              <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-tertiary)', display: 'block', marginBottom: '6px' }}>
-                Where to Watch / Stream On:
-              </span>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                {watchProviders.map((provider) => (
-                  <div key={provider.provider_id} style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: 'var(--color-surface-muted)', padding: '4px 8px', borderRadius: 'var(--radius-xs)' }}>
-                    <img src={`https://image.tmdb.org/t/p/w92${provider.logo_path}`} alt={provider.provider_name} style={{ width: '20px', height: '20px', borderRadius: '4px' }} />
-                    <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>{provider.provider_name}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div style={{ marginTop: 'auto', paddingTop: '16px', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+          <div className={styles.actionStack}>
             {trailer && (
               <button
+                type="button"
+                className={styles.primaryActionBtn}
                 onClick={() => setShowTrailerModal(true)}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  backgroundColor: '#ff0000',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: 'var(--radius-sm)',
-                  padding: '12px 24px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
               >
-                <Play size={18} fill="currentColor" /> Watch Trailer
+                <Play size={16} fill="currentColor" />
+                <span>Play Trailer</span>
               </button>
             )}
 
             <button
+              type="button"
+              className={`${styles.secondaryActionBtn} ${isInWishlist ? styles.active : ''}`}
               onClick={toggleWishlist}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                backgroundColor: isInWishlist ? 'var(--color-text-inverse)' : 'var(--color-surface-muted)',
-                color: isInWishlist ? 'var(--color-surface-base)' : 'var(--color-text-secondary)',
-                border: '1px solid var(--color-border-subtle)',
-                borderRadius: 'var(--radius-sm)',
-                padding: '12px 24px',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
             >
-              <Bookmark size={18} fill={isInWishlist ? 'currentColor' : 'none'} />
-              {isInWishlist ? 'In Your Wishlist' : 'Add to Wishlist'}
+              <Bookmark size={16} fill={isInWishlist ? 'currentColor' : 'none'} />
+              <span>{isInWishlist ? 'In Watchlist' : 'Add to Watchlist'}</span>
+            </button>
+
+            <button
+              type="button"
+              className={styles.secondaryActionBtn}
+              onClick={() => setShowRatingModal(true)}
+            >
+              <Star size={16} />
+              <span>Rate &amp; Review</span>
             </button>
           </div>
-        </div>
+
+          {/* Where to Watch */}
+          {(streamProviders.length > 0 || buyRentProviders.length > 0) && (
+            <div className={styles.providersBox}>
+              <span className={styles.providersTitle}>Where to Stream</span>
+
+              {streamProviders.length > 0 && (
+                <div className={styles.providersList}>
+                  {streamProviders.slice(0, 4).map((p) => (
+                    <img
+                      key={p.provider_id}
+                      src={`https://image.tmdb.org/t/p/w92${p.logo_path}`}
+                      alt={p.provider_name}
+                      title={p.provider_name}
+                      className={styles.providerLogo}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {buyRentProviders.length > 0 && (
+                <>
+                  <span className={styles.providersTitle} style={{ marginTop: '8px' }}>
+                    Rent or Purchase
+                  </span>
+                  <div className={styles.providersList}>
+                    {buyRentProviders.slice(0, 4).map((p) => (
+                      <img
+                        key={p.provider_id}
+                        src={`https://image.tmdb.org/t/p/w92${p.logo_path}`}
+                        alt={p.provider_name}
+                        title={p.provider_name}
+                        className={styles.providerLogo}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </aside>
+
+        {/* Right Column: Title, Plot, Credits & Cast */}
+        <section className={styles.rightCol}>
+          <div className={styles.titleArea}>
+            <div className={styles.metaRow}>
+              {movie.vote_average && movie.vote_average > 0 ? (
+                <span className={styles.scorePill}>
+                  <Star size={13} fill="currentColor" />
+                  <span>{movie.vote_average.toFixed(1)} TMDB</span>
+                </span>
+              ) : null}
+
+              {releaseYear && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <Calendar size={14} />
+                  <span>{releaseYear}</span>
+                </span>
+              )}
+
+              {movie.runtime ? (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <Clock size={14} />
+                  <span>{movie.runtime} min</span>
+                </span>
+              ) : null}
+            </div>
+
+            <h1 className={styles.mainTitle}>{movie.title || movie.name}</h1>
+
+            {movie.tagline && (
+              <p className={styles.tagline}>&ldquo;{movie.tagline}&rdquo;</p>
+            )}
+
+            {movie.genres && movie.genres.length > 0 && (
+              <div className={styles.genrePills}>
+                {movie.genres.map((g) => (
+                  <span key={g.id} className={styles.genreBadge}>
+                    {g.name}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <p className={styles.synopsis}>{movie.overview}</p>
+
+          {/* Key Filmmakers */}
+          {(director || writers.length > 0) && (
+            <div className={styles.crewGrid}>
+              {director && (
+                <div className={styles.crewItem}>
+                  <span className={styles.crewRole}>Director</span>
+                  <span className={styles.crewName}>{director.name}</span>
+                </div>
+              )}
+
+              {writers.length > 0 && (
+                <div className={styles.crewItem}>
+                  <span className={styles.crewRole}>Screenplay &amp; Writing</span>
+                  <span className={styles.crewName}>
+                    {writers.slice(0, 2).map((w) => w.name).join(', ')}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Cast Carousel */}
+          {movie.credits?.cast && movie.credits.cast.length > 0 && (
+            <div className={styles.castSection}>
+              <h2 className={styles.sectionHeading}>Principal Cast</h2>
+
+              <div className={styles.castRack}>
+                {movie.credits.cast.slice(0, 10).map((actor) => {
+                  const photo = actor.profile_path
+                    ? `https://image.tmdb.org/t/p/w185${actor.profile_path}`
+                    : null;
+
+                  return (
+                    <button
+                      key={actor.id}
+                      type="button"
+                      className={styles.castCard}
+                      onClick={() => setSelectedPersonId(actor.id)}
+                    >
+                      {photo ? (
+                        <img
+                          src={photo}
+                          alt={actor.name}
+                          className={styles.castPhoto}
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className={styles.castPlaceholder}>
+                          <User size={24} />
+                        </div>
+                      )}
+
+                      <div className={styles.castDetails}>
+                        <span className={styles.castName}>{actor.name}</span>
+                        <span className={styles.castCharacter}>{actor.character}</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Collection Explorer */}
+          {collectionParts.length > 0 && (
+            <div className={styles.collectionSection}>
+              <h2 className={styles.sectionHeading}>Franchise &amp; Connected Films</h2>
+
+              <div className={styles.castRack}>
+                {collectionParts.map((part) => (
+                  <Link
+                    key={part.id}
+                    to={`/movie/${part.id}`}
+                    className={styles.castCard}
+                    style={{ width: '130px' }}
+                  >
+                    {part.poster_path ? (
+                      <img
+                        src={`https://image.tmdb.org/t/p/w185${part.poster_path}`}
+                        alt={part.title}
+                        className={styles.castPhoto}
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className={styles.castPlaceholder}>No Poster</div>
+                    )}
+
+                    <div className={styles.castDetails}>
+                      <span className={styles.castName}>{part.title}</span>
+                      <span className={styles.castCharacter}>
+                        {(part.release_date || '').slice(0, 4)}
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
       </div>
 
-      {collectionParts.length > 0 && (
-        <section style={{ marginBottom: 'var(--space-13)' }}>
-          <h2 style={{ fontSize: 'var(--font-size-xl)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-8)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Layers size={20} color="var(--color-text-inverse)" /> Franchise Parts & Movie Collection
-          </h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '16px' }}>
-            {collectionParts.map((part) => (
-              <Link key={part.id} to={`/movie/${part.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                <div style={{ backgroundColor: 'var(--color-surface-raised)', borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--color-border-subtle)' }}>
-                  <div style={{ width: '100%', aspectRatio: '2 / 3', backgroundColor: 'var(--color-surface-muted)' }}>
-                    {part.poster_path ? (
-                      <img src={`https://image.tmdb.org/t/p/w185${part.poster_path}`} alt={part.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: '11px' }}>No Poster</div>
-                    )}
-                  </div>
-                  <div style={{ padding: '8px' }}>
-                    <p style={{ fontWeight: 600, fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', margin: 0 }}>{part.title}</p>
-                    <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)' }}>{part.release_date ? part.release_date.substring(0, 4) : ''}</span>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {movie.seasons && movie.seasons.length > 0 && (
-        <section style={{ marginBottom: 'var(--space-13)' }}>
-          <h2 style={{ fontSize: 'var(--font-size-xl)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-8)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Tv size={20} color="var(--color-text-inverse)" /> Seasons & Episodes ({movie.number_of_seasons})
-          </h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '16px' }}>
-            {movie.seasons.map((season) => (
-              <div key={season.id} style={{ backgroundColor: 'var(--color-surface-raised)', borderRadius: 'var(--radius-md)', padding: '12px', border: '1px solid var(--color-border-subtle)' }}>
-                <div style={{ width: '100%', aspectRatio: '2 / 3', borderRadius: 'var(--radius-sm)', overflow: 'hidden', marginBottom: '8px', backgroundColor: 'var(--color-surface-muted)' }}>
-                  {season.poster_path ? (
-                    <img src={`https://image.tmdb.org/t/p/w185${season.poster_path}`} alt={season.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: '11px' }}>No Poster</div>
-                  )}
-                </div>
-                <h4 style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', margin: '0 0 4px 0' }}>{season.name}</h4>
-                <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-inverse)', margin: 0 }}>{season.episode_count} Episodes</p>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      <section style={{ marginBottom: 'var(--space-13)' }}>
-        <h2 style={{ fontSize: 'var(--font-size-xl)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-8)' }}>
-          Main Crew & Filmmakers
-        </h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-          {director && (
-            <div
-              onClick={() => setSelectedPersonId(director.id)}
-              style={{ backgroundColor: 'var(--color-surface-raised)', padding: '16px', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border-subtle)', cursor: 'pointer' }}
-            >
-              <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-tertiary)' }}>Director</span>
-              <p style={{ fontWeight: 600, color: 'var(--color-text-inverse)' }}>{director.name} ↗</p>
-            </div>
-          )}
-          {cinematographer && (
-            <div
-              onClick={() => setSelectedPersonId(cinematographer.id)}
-              style={{ backgroundColor: 'var(--color-surface-raised)', padding: '16px', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border-subtle)', cursor: 'pointer' }}
-            >
-              <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-tertiary)' }}>Cinematographer / Cameraman</span>
-              <p style={{ fontWeight: 600, color: 'var(--color-text-inverse)' }}>{cinematographer.name} ↗</p>
-            </div>
-          )}
-          {writers.length > 0 && (
-            <div style={{ backgroundColor: 'var(--color-surface-raised)', padding: '16px', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border-subtle)' }}>
-              <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-tertiary)' }}>Writers</span>
-              <p style={{ fontWeight: 600, color: 'var(--color-text-secondary)' }}>{writers.map((w) => w.name).join(', ')}</p>
-            </div>
-          )}
-          {producers.length > 0 && (
-            <div style={{ backgroundColor: 'var(--color-surface-raised)', padding: '16px', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border-subtle)' }}>
-              <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-tertiary)' }}>Producers</span>
-              <p style={{ fontWeight: 600, color: 'var(--color-text-secondary)' }}>{producers.map((p) => p.name).join(', ')}</p>
-            </div>
-          )}
-        </div>
-      </section>
-
-      <section style={{ marginBottom: 'var(--space-13)' }}>
-        <h2 style={{ fontSize: 'var(--font-size-xl)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-10)' }}>
-          Cast & Actors (Click to view Profile & Timeline)
-        </h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '16px' }}>
-          {cast.map((actor) => (
-            <div
-              key={actor.id}
-              onClick={() => setSelectedPersonId(actor.id)}
-              style={{
-                backgroundColor: 'var(--color-surface-raised)',
-                border: '1px solid var(--color-border-subtle)',
-                borderRadius: 'var(--radius-md)',
-                overflow: 'hidden',
-                textAlign: 'center',
-                cursor: 'pointer',
-                transition: 'border-color 0.15s ease',
-              }}
-            >
-              <div style={{ width: '100%', aspectRatio: '1 / 1', backgroundColor: 'var(--color-surface-muted)' }}>
-                {actor.profile_path ? (
-                  <img
-                    src={`https://image.tmdb.org/t/p/w185${actor.profile_path}`}
-                    alt={actor.name}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
-                ) : (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: '11px', color: 'var(--color-text-tertiary)' }}>
-                    No Photo
-                  </div>
-                )}
-              </div>
-              <div style={{ padding: '8px 4px' }}>
-                <p style={{ fontWeight: 600, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-inverse)', margin: 0 }}>
-                  {actor.name} ↗
-                </p>
-                <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-tertiary)', margin: '2px 0 0 0' }}>
-                  {actor.character}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <PersonModal personId={selectedPersonId} onClose={() => setSelectedPersonId(null)} />
-
+      {/* Trailer Modal */}
       {showTrailerModal && trailer && (
         <div
+          role="dialog"
+          aria-modal="true"
           style={{
             position: 'fixed',
             inset: 0,
-            zIndex: 1000,
+            zIndex: 300,
             backgroundColor: 'rgba(0, 0, 0, 0.9)',
             display: 'flex',
             alignItems: 'center',
@@ -373,33 +419,39 @@ export const MovieDetailsPage: React.FC = () => {
               width: '100%',
               maxWidth: '900px',
               aspectRatio: '16 / 9',
-              backgroundColor: '#000000',
-              borderRadius: 'var(--radius-md)',
+              backgroundColor: '#000',
+              borderRadius: 'var(--radius-lg)',
               overflow: 'hidden',
             }}
             onClick={(e) => e.stopPropagation()}
           >
             <button
+              type="button"
               onClick={() => setShowTrailerModal(false)}
               style={{
                 position: 'absolute',
                 top: '12px',
                 right: '12px',
                 zIndex: 10,
-                backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                color: '#ffffff',
+                background: 'rgba(0, 0, 0, 0.8)',
+                color: '#fff',
                 border: 'none',
                 borderRadius: '50%',
-                width: '32px',
-                height: '32px',
+                width: '36px',
+                height: '36px',
                 cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
+              aria-label="Close trailer"
             >
-              ✕
+              <X size={20} />
             </button>
+
             <iframe
               src={`https://www.youtube.com/embed/${trailer.key}?autoplay=1`}
-              title="Official Trailer"
+              title={`${movie.title || movie.name} Trailer`}
               style={{ width: '100%', height: '100%', border: 'none' }}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
@@ -407,6 +459,23 @@ export const MovieDetailsPage: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+
+      {/* Person Filmography Modal */}
+      {selectedPersonId && (
+        <PersonModal
+          personId={selectedPersonId}
+          onClose={() => setSelectedPersonId(null)}
+        />
+      )}
+
+      {/* Rating & Review Modal */}
+      {showRatingModal && (
+        <RatingModal
+          movieId={movie.id}
+          movieTitle={movie.title || movie.name || ''}
+          onClose={() => setShowRatingModal(false)}
+        />
+      )}
+    </article>
   );
 };

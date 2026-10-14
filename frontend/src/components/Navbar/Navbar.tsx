@@ -1,8 +1,8 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Film, Bookmark, Award, Palette, Trophy, List, LogOut } from 'lucide-react';
+import { Film, Bookmark, Trophy, List, LogOut, Compass, Sparkles, Layers } from 'lucide-react';
 import { SearchAutocomplete } from '../SearchAutocomplete/SearchAutocomplete';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import styles from './Navbar.module.css';
 
 export const Navbar: React.FC = () => {
@@ -11,87 +11,89 @@ export const Navbar: React.FC = () => {
   return (
     <header className={styles.header}>
       <div className={styles.container}>
-        <NavLink to="/" className={styles.logo}>
-          <Film className={styles.logoAccent} size={24} />
-          <span>Movie<span className={styles.logoAccent}>Reco</span></span>
+        <NavLink to="/" className={styles.logo} aria-label="Moviereco Home">
+          <Film className={styles.logoIcon} size={22} />
+          <span>MOVIE<span className={styles.logoAccent}>RECO</span></span>
         </NavLink>
 
-        {/* Search Bar */}
         <SearchAutocomplete />
 
-        <nav className={styles.nav}>
+        <nav className={styles.nav} aria-label="Main Navigation">
           <NavLink
             to="/"
             className={({ isActive }) => `${styles.navLink} ${isActive ? styles.active : ''}`}
           >
-            Home
+            <Sparkles size={15} className={styles.navIcon} />
+            <span>Spotlight</span>
           </NavLink>
+
           <NavLink
             to="/discover"
             className={({ isActive }) => `${styles.navLink} ${isActive ? styles.active : ''}`}
           >
-            Discover
+            <Compass size={15} className={styles.navIcon} />
+            <span>Discover</span>
           </NavLink>
+
           <NavLink
             to="/top-lists"
             className={({ isActive }) => `${styles.navLink} ${isActive ? styles.active : ''}`}
           >
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-              <Award size={16} /> Top Lists
-            </span>
+            <Trophy size={15} className={styles.navIcon} />
+            <span>Hall of Fame</span>
           </NavLink>
+
           <NavLink
             to="/film-movements"
             className={({ isActive }) => `${styles.navLink} ${isActive ? styles.active : ''}`}
           >
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-              <Palette size={16} /> Eras
-            </span>
+            <Layers size={15} className={styles.navIcon} />
+            <span>Eras</span>
           </NavLink>
+
           <NavLink
             to="/awards"
             className={({ isActive }) => `${styles.navLink} ${isActive ? styles.active : ''}`}
           >
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-              <Trophy size={16} /> Awards
-            </span>
+            <Trophy size={15} className={styles.navIcon} />
+            <span>Laurels</span>
           </NavLink>
+
           <NavLink
             to="/watchlist"
             className={({ isActive }) => `${styles.navLink} ${isActive ? styles.active : ''}`}
           >
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-              <Bookmark size={16} /> Wishlist
-            </span>
+            <Bookmark size={15} className={styles.navIcon} />
+            <span>Wishlist</span>
           </NavLink>
+
           {isLoggedIn && (
             <NavLink
               to="/my-lists"
               className={({ isActive }) => `${styles.navLink} ${isActive ? styles.active : ''}`}
             >
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                <List size={16} /> Lists
-              </span>
+              <List size={15} className={styles.navIcon} />
+              <span>Curation</span>
             </NavLink>
           )}
         </nav>
 
         <div className={styles.authGroup}>
           {isLoggedIn ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-primary)' }}>
-                {user?.name}
-              </span>
+            <div className={styles.userMenu}>
+              <span className={styles.userBadge}>{user?.name}</span>
               <button
+                type="button"
                 onClick={logout}
-                className={styles.navLink}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                className={styles.signOutBtn}
+                title="Sign out of account"
               >
-                <LogOut size={16} /> Sign Out
+                <LogOut size={14} />
+                <span>Sign Out</span>
               </button>
             </div>
           ) : (
-            <NavLink to="/login" className={styles.navLink}>
+            <NavLink to="/login" className={styles.signInBtn}>
               Sign In
             </NavLink>
           )}

@@ -4,173 +4,183 @@ import type { PersonDetails } from '../api/tmdb';
 import { PersonModal } from '../components/PersonModal/PersonModal';
 import { MovieGrid } from '../components/MovieGrid/MovieGrid';
 import type { Movie } from '../components/MovieCard/MovieCard';
-import { Award, UserCheck, Video } from 'lucide-react';
+import { Trophy, Clapperboard, Users, User } from 'lucide-react';
+import styles from './TopListsPage.module.css';
 
 export const TopListsPage: React.FC = () => {
   const [tab, setTab] = useState<'top250' | 'directors' | 'actors'>('top250');
+
   const [topMovies, setTopMovies] = useState<Movie[]>([]);
+
   const [directors, setDirectors] = useState<PersonDetails[]>([]);
+
   const [actors, setActors] = useState<PersonDetails[]>([]);
+
   const [loading, setLoading] = useState(true);
+
   const [selectedPersonId, setSelectedPersonId] = useState<number | null>(null);
+
   const [wishlistIds] = useState<number[]>(() => {
     const saved = localStorage.getItem('wishlist');
-    return saved ? JSON.parse(saved) : [];
+
+    if (!saved) {
+      return [];
+    }
+
+    try {
+      return JSON.parse(saved);
+    } catch {
+      return [];
+    }
   });
 
   useEffect(() => {
-    const loadTopLists = async () => {
-      setLoading(true);
+    let ignore = false;
+
+    const loadData = async () => {
       try {
-        if (tab === 'top250' && topMovies.length === 0) {
-          const movies = await fetchTop250Movies();
-          setTopMovies(movies);
-        } else if (tab === 'directors' && directors.length === 0) {
-          const people = await fetchPopularPeople('Directing');
-          setDirectors(people);
-        } else if (tab === 'actors' && actors.length === 0) {
-          const people = await fetchPopularPeople('Acting');
-          setActors(people);
+        if (tab === 'top250') {
+          if (topMovies.length === 0) {
+            const movies = await fetchTop250Movies();
+
+            if (!ignore) {
+              setTopMovies(movies);
+            }
+          }
+        } else if (tab === 'directors') {
+          if (directors.length === 0) {
+            const people = await fetchPopularPeople('Directing');
+
+            if (!ignore) {
+              setDirectors(people);
+            }
+          }
+        } else if (tab === 'actors') {
+          if (actors.length === 0) {
+            const people = await fetchPopularPeople('Acting');
+
+            if (!ignore) {
+              setActors(people);
+            }
+          }
         }
       } catch (err) {
         console.error(err);
       } finally {
-        setLoading(false);
+        if (!ignore) {
+          setLoading(false);
+        }
       }
     };
-    loadTopLists();
-  }, [tab]);
+
+    loadData();
+
+    return () => {
+      ignore = true;
+    };
+  }, [tab, topMovies.length, directors.length, actors.length]);
 
   const activePeople = tab === 'directors' ? directors : actors;
 
   return (
-    <div style={{ maxWidth: 'var(--layout-max-width)', margin: '0 auto', padding: 'var(--space-10)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-10)', flexWrap: 'wrap', gap: '16px' }}>
-        <div>
-          <h1 style={{ fontSize: 'var(--font-size-2xl)', color: 'var(--color-text-secondary)', margin: 0 }}>
-            Hall of Fame & All-Time Best
-          </h1>
-          <p style={{ color: 'var(--color-text-primary)', fontSize: 'var(--font-size-sm)', marginTop: '4px' }}>
-            {tab === 'top250' ? `Showing Top 250 Highest Rated Movies of All Time` : `Top ${tab} & Their Masterpieces`}
+    <div className={styles.container}>
+      <header className={styles.header}>
+        <div className={styles.titleArea}>
+          <h1 className={styles.title}>Cinema Hall of Fame</h1>
+          <p className={styles.subtitle}>
+            {tab === 'top250'
+              ? 'The Top 250 highest rated films in cinematic history.'
+              : `Renowned ${tab} whose masterworks shaped modern cinema.`}
           </p>
         </div>
 
-        <div style={{ display: 'flex', backgroundColor: 'var(--color-surface-raised)', borderRadius: 'var(--radius-sm)', padding: '4px', border: '1px solid var(--color-border-subtle)', flexWrap: 'wrap' }}>
+        <div className={styles.tabs} role="tablist" aria-label="Hall of Fame Sections">
           <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'top250'}
+            className={`${styles.tabBtn} ${tab === 'top250' ? styles.active : ''}`}
             onClick={() => setTab('top250')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '6px 14px',
-              borderRadius: 'var(--radius-xs)',
-              border: 'none',
-              backgroundColor: tab === 'top250' ? 'var(--color-text-inverse)' : 'transparent',
-              color: tab === 'top250' ? 'var(--color-surface-base)' : 'var(--color-text-primary)',
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
           >
-            <Award size={16} /> Top 250 Movies
+            <Trophy size={14} />
+            <span>Top 250 Films</span>
           </button>
+
           <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'directors'}
+            className={`${styles.tabBtn} ${tab === 'directors' ? styles.active : ''}`}
             onClick={() => setTab('directors')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '6px 14px',
-              borderRadius: 'var(--radius-xs)',
-              border: 'none',
-              backgroundColor: tab === 'directors' ? 'var(--color-text-inverse)' : 'transparent',
-              color: tab === 'directors' ? 'var(--color-surface-base)' : 'var(--color-text-primary)',
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
           >
-            <Video size={16} /> Legendary Directors
+            <Clapperboard size={14} />
+            <span>Auteurs &amp; Directors</span>
           </button>
+
           <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'actors'}
+            className={`${styles.tabBtn} ${tab === 'actors' ? styles.active : ''}`}
             onClick={() => setTab('actors')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '6px 14px',
-              borderRadius: 'var(--radius-xs)',
-              border: 'none',
-              backgroundColor: tab === 'actors' ? 'var(--color-text-inverse)' : 'transparent',
-              color: tab === 'actors' ? 'var(--color-surface-base)' : 'var(--color-text-primary)',
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
           >
-            <UserCheck size={16} /> Popular Actors
+            <Users size={14} />
+            <span>Celebrated Actors</span>
           </button>
         </div>
-      </div>
+      </header>
 
       {tab === 'top250' ? (
-        <MovieGrid movies={topMovies} isLoading={loading} wishlistIds={wishlistIds} />
+        <MovieGrid
+          movies={topMovies}
+          isLoading={loading}
+          wishlistIds={wishlistIds}
+        />
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-10)' }}>
-          {loading ? (
-            <p style={{ color: 'var(--color-text-primary)' }}>Loading {tab}...</p>
-          ) : (
-            activePeople.map((person) => (
-              <div
+        <div className={styles.personGrid}>
+          {activePeople.map((person) => {
+            const photoUrl = person.profile_path
+              ? `https://image.tmdb.org/t/p/w300${person.profile_path}`
+              : null;
+
+            return (
+              <button
                 key={person.id}
+                type="button"
+                className={styles.personCard}
                 onClick={() => setSelectedPersonId(person.id)}
-                style={{
-                  backgroundColor: 'var(--color-surface-raised)',
-                  border: '1px solid var(--color-border-subtle)',
-                  borderRadius: 'var(--radius-md)',
-                  overflow: 'hidden',
-                  padding: 'var(--space-8)',
-                  display: 'flex',
-                  gap: 'var(--space-8)',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
-                }}
               >
-                <div style={{ width: '85px', height: '110px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', backgroundColor: 'var(--color-surface-muted)', flexShrink: 0 }}>
-                  {person.profile_path ? (
+                <div className={styles.photoWrapper}>
+                  {photoUrl ? (
                     <img
-                      src={`https://image.tmdb.org/t/p/w185${person.profile_path}`}
+                      src={photoUrl}
                       alt={person.name}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      className={styles.personPhoto}
+                      loading="lazy"
                     />
                   ) : (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: '11px', color: 'var(--color-text-tertiary)' }}>
-                      No Photo
+                    <div className={styles.personPlaceholder}>
+                      <User size={32} />
                     </div>
                   )}
                 </div>
 
-                <div>
-                  <h3 style={{ fontSize: 'var(--font-size-base)', color: 'var(--color-text-inverse)', marginBottom: '4px' }}>
-                    {person.name} ↗
-                  </h3>
-                  <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-primary)', display: 'block', marginBottom: '8px' }}>
-                    {person.known_for_department}
-                  </span>
-
-                  <strong style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', display: 'block' }}>
-                    Best Known For:
-                  </strong>
-                  <ul style={{ paddingLeft: '16px', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-tertiary)', margin: '4px 0 0 0' }}>
-                    {person.known_for?.slice(0, 3).map((work) => (
-                      <li key={work.id}>{work.title || work.name}</li>
-                    ))}
-                  </ul>
+                <div className={styles.personContent}>
+                  <span className={styles.personName}>{person.name}</span>
+                  <span className={styles.personRole}>{person.known_for_department}</span>
                 </div>
-              </div>
-            ))
-          )}
+              </button>
+            );
+          })}
         </div>
       )}
 
-      <PersonModal personId={selectedPersonId} onClose={() => setSelectedPersonId(null)} />
+      {selectedPersonId && (
+        <PersonModal
+          personId={selectedPersonId}
+          onClose={() => setSelectedPersonId(null)}
+        />
+      )}
     </div>
   );
 };

@@ -28,8 +28,8 @@ export const MovieGrid: React.FC<MovieGridProps> = ({
 
   if (!movies || movies.length === 0) {
     return (
-      <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--color-text-primary)' }}>
-        <p>No movies found matching your criteria.</p>
+      <div className={styles.emptyState}>
+        <p>No films found matching this selection.</p>
       </div>
     );
   }

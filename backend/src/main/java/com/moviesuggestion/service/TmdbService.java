@@ -24,7 +24,9 @@ public class TmdbService {
 
     private HttpHeaders getAuthHeaders() {
         HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(apiToken);
+        if (apiToken != null && !apiToken.isBlank()) {
+            headers.setBearerAuth(apiToken.trim());
+        }
         headers.setContentType(MediaType.APPLICATION_JSON);
         return headers;
     }
@@ -99,6 +101,9 @@ public class TmdbService {
     }
 
     private JsonNode callTmdb(String url) {
+        if (apiToken == null || apiToken.isBlank()) {
+            throw new RuntimeException("TMDB token is not configured. Please set the TMDB_TOKEN environment variable.");
+        }
         HttpEntity<Void> entity = new HttpEntity<>(getAuthHeaders());
         ResponseEntity<JsonNode> response = restTemplate.exchange(url, HttpMethod.GET, entity, JsonNode.class);
         return response.getBody();

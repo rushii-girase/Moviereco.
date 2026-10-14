@@ -1,64 +1,92 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import { submitRating, fetchMovieRating } from '../../api/backend';
 import type { RatingData } from '../../api/backend';
 import { Star, X } from 'lucide-react';
 
 interface RatingModalProps {
-  tmdbId: number;
+  movieId?: number;
+  tmdbId?: number;
   mediaType?: string;
   movieTitle: string;
-  isOpen: boolean;
+  isOpen?: boolean;
   onClose: () => void;
 }
 
 const CATEGORIES = [
-  { key: 'overall', label: 'Overall', icon: '⭐' },
-  { key: 'cinematography', label: 'Cinematography', icon: '🎥' },
-  { key: 'acting', label: 'Acting', icon: '🎭' },
-  { key: 'story', label: 'Story', icon: '📖' },
-  { key: 'soundtrack', label: 'Soundtrack', icon: '🎵' },
+  { key: 'overall', label: 'Overall Impression', icon: '⭐' },
+  { key: 'cinematography', label: 'Cinematography & Light', icon: '🎥' },
+  { key: 'acting', label: 'Performances & Acting', icon: '🎭' },
+  { key: 'story', label: 'Screenplay & Narrative', icon: '📖' },
+  { key: 'soundtrack', label: 'Soundtrack & Sound Design', icon: '🎵' },
 ] as const;
 
-export const RatingModal: React.FC<RatingModalProps> = ({ tmdbId, mediaType = 'movie', movieTitle, isOpen, onClose }) => {
+export const RatingModal: React.FC<RatingModalProps> = ({
+  movieId,
+  tmdbId,
+  mediaType = 'movie',
+  movieTitle,
+  onClose,
+}) => {
+  const targetId = tmdbId || movieId || 0;
+
   const { isLoggedIn } = useAuth();
+
   const [ratings, setRatings] = useState<Record<string, number>>({
-    overall: 0, cinematography: 0, acting: 0, story: 0, soundtrack: 0,
+    overall: 0,
+    cinematography: 0,
+    acting: 0,
+    story: 0,
+    soundtrack: 0,
   });
+
   const [reviewText, setReviewText] = useState('');
+
   const [loading, setLoading] = useState(false);
+
   const [saved, setSaved] = useState(false);
+
   const [existingLoaded, setExistingLoaded] = useState(false);
 
   useEffect(() => {
-    if (isOpen && isLoggedIn && !existingLoaded) {
-      fetchMovieRating(tmdbId, mediaType).then((data: any) => {
-        if (data && data.overall) {
-          setRatings({
-            overall: data.overall || 0,
-            cinematography: data.cinematography || 0,
-            acting: data.acting || 0,
-            story: data.story || 0,
-            soundtrack: data.soundtrack || 0,
-          });
-          setReviewText(data.reviewText || '');
-        }
-        setExistingLoaded(true);
-      }).catch(() => setExistingLoaded(true));
+    if (isLoggedIn && !existingLoaded && targetId > 0) {
+      fetchMovieRating(targetId, mediaType)
+        .then((r: RatingData | null) => {
+          if (r && r.overall) {
+            setRatings({
+              overall: r.overall || 0,
+              cinematography: r.cinematography || 0,
+              acting: r.acting || 0,
+              story: r.story || 0,
+              soundtrack: r.soundtrack || 0,
+            });
+
+            setReviewText(r.reviewText || '');
+          }
+
+          setExistingLoaded(true);
+        })
+        .catch(() => {
+          setExistingLoaded(true);
+        });
     }
-  }, [isOpen, isLoggedIn, tmdbId, mediaType, existingLoaded]);
+  }, [isLoggedIn, targetId, mediaType, existingLoaded]);
 
   const handleSetRating = (category: string, value: number) => {
-    setRatings(prev => ({ ...prev, [category]: value }));
+    setRatings((prev) => ({ ...prev, [category]: value }));
     setSaved(false);
   };
 
   const handleSubmit = async () => {
-    if (ratings.overall === 0) return;
+    if (ratings.overall === 0) {
+      return;
+    }
+
     setLoading(true);
+
     try {
       const ratingData: RatingData = {
-        tmdbId,
+        tmdbId: targetId,
         mediaType,
         overall: ratings.overall,
         cinematography: ratings.cinematography || undefined,
@@ -67,9 +95,11 @@ export const RatingModal: React.FC<RatingModalProps> = ({ tmdbId, mediaType = 'm
         soundtrack: ratings.soundtrack || undefined,
         reviewText: reviewText.trim() || undefined,
       };
+
       await submitRating(ratingData);
+
       setSaved(true);
-      setTimeout(() => onClose(), 1200);
+      setTimeout(onClose, 1200);
     } catch (err) {
       console.error(err);
     } finally {
@@ -77,117 +107,167 @@ export const RatingModal: React.FC<RatingModalProps> = ({ tmdbId, mediaType = 'm
     }
   };
 
-  if (!isOpen) return null;
-
   return (
     <div
-      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
       style={{
-        position: 'fixed', inset: 0, zIndex: 1000,
-        backgroundColor: 'rgba(0,0,0,0.7)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: 'var(--space-10)',
+        position: 'fixed',
+        inset: 0,
+        zIndex: 350,
+        backgroundColor: 'rgba(8, 9, 11, 0.85)',
+        backdropFilter: 'blur(16px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 'var(--space-6)',
       }}
+      onClick={onClose}
     >
       <div
-        onClick={(e) => e.stopPropagation()}
         style={{
-          backgroundColor: 'var(--color-surface-raised)',
-          border: '1px solid var(--color-border-subtle)',
-          borderRadius: 'var(--radius-lg)',
-          padding: 'var(--space-12)',
-          maxWidth: '480px', width: '100%',
-          maxHeight: '90vh', overflowY: 'auto',
+          backgroundColor: 'var(--color-surface-card)',
+          border: '1px solid var(--color-border-hover)',
+          borderRadius: 'var(--radius-xl)',
+          padding: 'var(--space-10) var(--space-8)',
+          maxWidth: '520px',
+          width: '100%',
+          boxShadow: 'var(--shadow-elevation)',
+          position: 'relative',
         }}
+        onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-10)' }}>
-          <h2 style={{ fontSize: 'var(--font-size-lg)', color: 'var(--color-text-secondary)' }}>
-            Rate: {movieTitle}
-          </h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--color-text-tertiary)', cursor: 'pointer' }}>
-            <X size={20} />
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          style={{
+            position: 'absolute',
+            top: '16px',
+            right: '16px',
+            background: 'transparent',
+            border: 'none',
+            color: 'var(--color-text-tertiary)',
+            cursor: 'pointer',
+          }}
+          aria-label="Close review dialog"
+        >
+          <X size={20} />
+        </button>
+
+        <h2 style={{ fontFamily: 'var(--font-family-display)', fontSize: 'var(--font-size-xl)', color: 'var(--color-text-secondary)', marginBottom: '4px' }}>
+          Rate &amp; Review
+        </h2>
+
+        <p style={{ color: 'var(--color-text-primary)', fontSize: 'var(--font-size-xs)', marginBottom: 'var(--space-8)' }}>
+          {movieTitle}
+        </p>
 
         {!isLoggedIn ? (
-          <div style={{ textAlign: 'center', padding: 'var(--space-10)' }}>
-            <p style={{ color: 'var(--color-text-primary)', marginBottom: 'var(--space-6)' }}>Sign in to rate movies</p>
-            <a href="/login" style={{ color: 'var(--color-text-inverse)', fontWeight: 600 }}>Sign In →</a>
+          <div style={{ textAlign: 'center', padding: '24px 0' }}>
+            <p style={{ color: 'var(--color-text-primary)', fontSize: 'var(--font-size-sm)', marginBottom: '16px' }}>
+              Sign in to record your multi-dimensional film score and review.
+            </p>
+            <a
+              href="/login"
+              style={{
+                display: 'inline-block',
+                backgroundColor: 'var(--color-accent-gold)',
+                color: '#08090b',
+                padding: '10px 20px',
+                borderRadius: 'var(--radius-pill)',
+                fontWeight: 700,
+                fontSize: 'var(--font-size-xs)',
+              }}
+            >
+              Sign In to Rate
+            </a>
           </div>
         ) : (
-          <>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
             {CATEGORIES.map(({ key, label, icon }) => (
-              <div key={key} style={{ marginBottom: 'var(--space-8)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                  <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-primary)' }}>
-                    {icon} {label} {key === 'overall' && <span style={{ color: 'var(--color-state-error)' }}>*</span>}
-                  </span>
-                  <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-inverse)', fontWeight: 600 }}>
-                    {ratings[key] || '—'}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', gap: '2px' }}>
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((v) => (
+              <div key={key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+                <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span>{icon}</span>
+                  <span>{label}</span>
+                </span>
+
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  {[1, 2, 3, 4, 5].map((star) => (
                     <button
-                      key={v}
-                      onClick={() => handleSetRating(key, v)}
+                      key={star}
+                      type="button"
                       style={{
-                        flex: 1, height: '28px',
-                        backgroundColor: v <= ratings[key] ? 'var(--color-text-inverse)' : 'var(--color-surface-muted)',
-                        border: '1px solid var(--color-border-subtle)',
-                        borderRadius: '3px',
+                        background: 'transparent',
+                        border: 'none',
                         cursor: 'pointer',
-                        transition: 'all 100ms ease',
+                        padding: '2px',
+                        color: star <= (ratings[key] || 0) ? 'var(--color-accent-gold)' : 'var(--color-text-tertiary)',
+                        transition: 'transform 0.1s ease',
                       }}
-                    />
+                      onClick={() => handleSetRating(key, star)}
+                      aria-label={`${star} stars for ${label}`}
+                    >
+                      <Star size={18} fill={star <= (ratings[key] || 0) ? 'currentColor' : 'none'} />
+                    </button>
                   ))}
                 </div>
               </div>
             ))}
 
-            <div style={{ marginBottom: 'var(--space-10)' }}>
-              <label style={{ display: 'block', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-primary)', marginBottom: '4px' }}>
-                📝 Review (optional)
+            <div style={{ marginTop: 'var(--space-4)' }}>
+              <label
+                htmlFor="reviewNotes"
+                style={{
+                  display: 'block',
+                  fontSize: 'var(--font-size-xs)',
+                  color: 'var(--color-text-primary)',
+                  marginBottom: 'var(--space-2)',
+                  fontWeight: 600,
+                }}
+              >
+                Cinephile Notes &amp; Thoughts
               </label>
+
               <textarea
+                id="reviewNotes"
                 value={reviewText}
                 onChange={(e) => setReviewText(e.target.value)}
+                placeholder="Write your critical impressions, memorable scenes, auteur techniques..."
                 rows={3}
-                placeholder="Share your thoughts…"
                 style={{
                   width: '100%',
+                  padding: '10px 14px',
                   backgroundColor: 'var(--color-surface-muted)',
                   border: '1px solid var(--color-border-subtle)',
                   borderRadius: 'var(--radius-sm)',
-                  padding: 'var(--space-6) var(--space-8)',
                   color: 'var(--color-text-secondary)',
-                  resize: 'vertical',
                   fontSize: 'var(--font-size-sm)',
+                  outline: 'none',
                 }}
               />
             </div>
 
             <button
-              onClick={handleSubmit}
+              type="button"
               disabled={loading || ratings.overall === 0}
+              onClick={handleSubmit}
               style={{
-                width: '100%',
-                backgroundColor: saved ? 'var(--color-state-success)' : 'var(--color-text-inverse)',
-                color: 'var(--color-surface-base)',
-                border: 'none', borderRadius: 'var(--radius-sm)',
-                padding: '12px', fontWeight: 600,
+                marginTop: 'var(--space-4)',
+                padding: '12px',
+                borderRadius: 'var(--radius-pill)',
+                backgroundColor: saved ? 'var(--color-state-success)' : 'var(--color-accent-gold)',
+                color: '#08090b',
+                fontWeight: 700,
+                fontSize: 'var(--font-size-sm)',
+                border: 'none',
                 cursor: loading || ratings.overall === 0 ? 'not-allowed' : 'pointer',
-                opacity: ratings.overall === 0 ? 0.5 : 1,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                opacity: ratings.overall === 0 ? 0.4 : 1,
+                transition: 'all var(--motion-duration-instant) ease',
               }}
             >
-              {saved ? (
-                <><Star size={16} /> Rating Saved!</>
-              ) : loading ? 'Saving…' : (
-                <><Star size={16} /> Submit Rating</>
-              )}
+              {saved ? 'Rating Saved!' : loading ? 'Submitting...' : 'Save Rating & Review'}
             </button>
-          </>
+          </div>
         )}
       </div>
     </div>

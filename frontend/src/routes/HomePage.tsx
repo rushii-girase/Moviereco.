@@ -1,21 +1,51 @@
 import React, { useEffect, useState } from 'react';
-import { fetchTrendingMovies, fetchPopularMovies, fetchUpcomingMovies, fetchTopRatedMovies } from '../api/tmdb';
+import { Link } from 'react-router-dom';
+import {
+  fetchTrendingMovies,
+  fetchPopularMovies,
+  fetchUpcomingMovies,
+  fetchTopRatedMovies,
+} from '../api/tmdb';
 import { MovieGrid } from '../components/MovieGrid/MovieGrid';
 import type { Movie } from '../components/MovieCard/MovieCard';
-import { Sparkles, Calendar, Award } from 'lucide-react';
+import { Sparkles, Calendar, Star, Film, Bookmark, ChevronRight } from 'lucide-react';
+import styles from './HomePage.module.css';
+
+interface FeaturedMovie extends Movie {
+  overview?: string;
+  backdropPath?: string | null;
+}
 
 export const HomePage: React.FC = () => {
   const [trending, setTrending] = useState<Movie[]>([]);
+
   const [popular, setPopular] = useState<Movie[]>([]);
+
   const [upcoming, setUpcoming] = useState<Movie[]>([]);
+
   const [topRated, setTopRated] = useState<Movie[]>([]);
+
+  const [featured, setFeatured] = useState<FeaturedMovie | null>(null);
+
   const [loading, setLoading] = useState(true);
+
   const [wishlistIds, setWishlistIds] = useState<number[]>(() => {
     const saved = localStorage.getItem('wishlist');
-    return saved ? JSON.parse(saved) : [];
+
+    if (!saved) {
+      return [];
+    }
+
+    try {
+      return JSON.parse(saved);
+    } catch {
+      return [];
+    }
   });
 
   useEffect(() => {
+    let isMounted = true;
+
     const loadData = async () => {
       try {
         const [trendData, popData, upData, topData] = await Promise.all([
@@ -24,67 +54,135 @@ export const HomePage: React.FC = () => {
           fetchUpcomingMovies(),
           fetchTopRatedMovies(),
         ]);
+
+        if (!isMounted) {
+          return;
+        }
+
         setTrending(trendData);
         setPopular(popData);
         setUpcoming(upData);
         setTopRated(topData);
+
+        if (trendData.length > 0) {
+          const topPick = trendData[0];
+
+          setFeatured({
+            ...topPick,
+            overview:
+              'Experience an acclaimed cinematic work leading world audiences this week. Explore directors, ratings, and behind-the-scenes artistry.',
+          });
+        }
       } catch (err) {
         console.error(err);
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
+
     loadData();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleToggleWishlist = (movieId: number, e: React.MouseEvent) => {
     e.preventDefault();
+
     setWishlistIds((prev) => {
-      const updated = prev.includes(movieId)
+      const isPresent = prev.includes(movieId);
+
+      const updated = isPresent
         ? prev.filter((id) => id !== movieId)
         : [...prev, movieId];
+
       localStorage.setItem('wishlist', JSON.stringify(updated));
+
       return updated;
     });
   };
 
-  const featured = trending[0];
+  const isFeaturedInWishlist = featured ? wishlistIds.includes(featured.id) : false;
+
+  const heroBackdropUrl = featured?.posterPath
+    ? `https://image.tmdb.org/t/p/original${featured.posterPath}`
+    : null;
 
   return (
-    <div style={{ maxWidth: 'var(--layout-max-width)', margin: '0 auto', padding: '0 var(--space-10)' }}>
-      {/* Hero Banner */}
+    <div className={styles.container}>
+      {/* Cinematic Spotlight Hero */}
       {featured && (
-        <section
-          style={{
-            position: 'relative',
-            margin: 'var(--space-10) 0 var(--space-13) 0',
-            borderRadius: 'var(--radius-lg)',
-            overflow: 'hidden',
-            backgroundColor: 'var(--color-surface-raised)',
-            border: '1px solid var(--color-border-subtle)',
-            padding: 'var(--space-13)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 'var(--space-6)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--color-text-inverse)', fontWeight: 600 }}>
-            <Sparkles size={18} /> Trending #1 This Week
+        <section className={styles.hero} aria-label="Featured Film">
+          {heroBackdropUrl && (
+            <img
+              src={heroBackdropUrl}
+              alt={featured.title}
+              className={styles.heroBackdrop}
+            />
+          )}
+
+          <div className={styles.heroOverlay} />
+
+          <div className={styles.heroContent}>
+            <div className={styles.spotlightPill}>
+              <Sparkles size={13} />
+              <span>Spotlight Masterpiece</span>
+            </div>
+
+            <h1 className={styles.heroTitle}>{featured.title}</h1>
+
+            <div className={styles.heroMeta}>
+              {featured.releaseYear && <span>{featured.releaseYear}</span>}
+              {featured.rating && featured.rating > 0 && (
+                <div className={styles.heroRating}>
+                  <Star size={15} fill="currentColor" />
+                  <span>{featured.rating.toFixed(1)} TMDB Score</span>
+                </div>
+              )}
+            </div>
+
+            <p className={styles.heroOverview}>{featured.overview}</p>
+
+            <div className={styles.heroActions}>
+              <Link to={`/movie/${featured.id}`} className={styles.primaryBtn}>
+                <Film size={16} />
+                <span>Explore Film</span>
+              </Link>
+
+              <button
+                type="button"
+                className={styles.secondaryBtn}
+                onClick={(e) => handleToggleWishlist(featured.id, e)}
+              >
+                <Bookmark
+                  size={16}
+                  fill={isFeaturedInWishlist ? 'currentColor' : 'none'}
+                />
+                <span>
+                  {isFeaturedInWishlist ? 'In Wishlist' : 'Add to Wishlist'}
+                </span>
+              </button>
+            </div>
           </div>
-          <h1 style={{ fontSize: 'var(--font-size-2xl)', color: 'var(--color-text-secondary)' }}>
-            {featured.title}
-          </h1>
-          <p style={{ color: 'var(--color-text-primary)', maxWidth: '600px' }}>
-            Explore categories, release years, ratings, actors, directors, and upcoming trailers to find your next movie.
-          </p>
         </section>
       )}
 
-      {/* Upcoming Movies */}
-      <section style={{ marginBottom: 'var(--space-13)' }}>
-        <h2 style={{ fontSize: 'var(--font-size-xl)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-10)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Calendar size={20} color="var(--color-text-inverse)" /> Upcoming Movies & Cinema Releases
-        </h2>
+      {/* Theatrical Premieres & Upcoming */}
+      <section className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>
+            <Calendar size={18} className={styles.sectionIcon} />
+            <span>Theatrical Premieres &amp; Upcoming</span>
+          </h2>
+          <Link to="/discover" className={styles.viewAllLink}>
+            <span>View All</span>
+            <ChevronRight size={14} style={{ verticalAlign: 'middle' }} />
+          </Link>
+        </div>
+
         <MovieGrid
           movies={upcoming.slice(0, 6)}
           isLoading={loading}
@@ -93,24 +191,40 @@ export const HomePage: React.FC = () => {
         />
       </section>
 
-      {/* Trending Row */}
-      <section style={{ marginBottom: 'var(--space-13)' }}>
-        <h2 style={{ fontSize: 'var(--font-size-xl)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-10)' }}>
-          Trending This Week
-        </h2>
+      {/* Trending in World Cinema */}
+      <section className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>
+            <Sparkles size={18} className={styles.sectionIcon} />
+            <span>Trending in World Cinema</span>
+          </h2>
+          <Link to="/discover" className={styles.viewAllLink}>
+            <span>Explore More</span>
+            <ChevronRight size={14} style={{ verticalAlign: 'middle' }} />
+          </Link>
+        </div>
+
         <MovieGrid
-          movies={trending}
+          movies={trending.slice(0, 6)}
           isLoading={loading}
           wishlistIds={wishlistIds}
           onToggleWishlist={handleToggleWishlist}
         />
       </section>
 
-      {/* All Time Top Rated */}
-      <section style={{ marginBottom: 'var(--space-13)' }}>
-        <h2 style={{ fontSize: 'var(--font-size-xl)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-10)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Award size={20} color="var(--color-text-inverse)" /> Highest Rated Movies of All Time
-        </h2>
+      {/* Hall of Fame Masterpieces */}
+      <section className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>
+            <Star size={18} className={styles.sectionIcon} />
+            <span>All-Time Acclaimed Masterpieces</span>
+          </h2>
+          <Link to="/top-lists" className={styles.viewAllLink}>
+            <span>Top 250</span>
+            <ChevronRight size={14} style={{ verticalAlign: 'middle' }} />
+          </Link>
+        </div>
+
         <MovieGrid
           movies={topRated.slice(0, 6)}
           isLoading={loading}
@@ -119,13 +233,17 @@ export const HomePage: React.FC = () => {
         />
       </section>
 
-      {/* Popular Row */}
-      <section style={{ marginBottom: 'var(--space-13)' }}>
-        <h2 style={{ fontSize: 'var(--font-size-xl)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-10)' }}>
-          All Time Popular
-        </h2>
+      {/* Global Audience Favorites */}
+      <section className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>
+            <Film size={18} className={styles.sectionIcon} />
+            <span>Global Audience Favorites</span>
+          </h2>
+        </div>
+
         <MovieGrid
-          movies={popular}
+          movies={popular.slice(0, 6)}
           isLoading={loading}
           wishlistIds={wishlistIds}
           onToggleWishlist={handleToggleWishlist}

@@ -1,32 +1,57 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: var(--space-10);
+  gap: var(--space-8);
   width: 100%;
 }
 
-@media (min-width: 600px) {
+@media (min-width: 640px) {
   .grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-8);
   }
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 900px) {
+  .grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-9);
+  }
+}
+
+@media (min-width: 1140px) {
   .grid {
     grid-template-columns: repeat(6, 1fr);
+    gap: var(--space-9);
   }
 }
 
 .skeletonCard {
   width: 100%;
   aspect-ratio: 2 / 3;
-  background-color: var(--color-surface-raised);
+  background: linear-gradient(
+    110deg,
+    rgba(21, 25, 34, 0.6) 8%,
+    rgba(32, 38, 51, 0.7) 18%,
+    rgba(21, 25, 34, 0.6) 33%
+  );
+  background-size: 200% 100%;
   border-radius: var(--radius-md);
-  animation: pulse 1.5s infinite ease-in-out;
+  border: 1px solid var(--color-border-subtle);
+  animation: shimmer 1.8s infinite linear;
 }
 
-@keyframes pulse {
-  0% { opacity: 0.6; }
-  50% { opacity: 0.3; }
-  100% { opacity: 0.6; }
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.emptyState {
+  text-align: center;
+  padding: var(--space-13) var(--space-10);
+  color: var(--color-text-primary);
+  background-color: var(--color-surface-muted);
+  border: 1px dashed var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-base);
 }

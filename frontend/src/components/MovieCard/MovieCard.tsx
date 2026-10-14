@@ -27,15 +27,16 @@ export const MovieCard: React.FC<MovieCardProps> = ({
     : null;
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div className={styles.wrapper}>
       {onToggleWishlist && (
         <button
+          type="button"
           className={`${styles.wishlistBtn} ${isInWishlist ? styles.active : ''}`}
           onClick={(e) => onToggleWishlist(movie.id, e)}
-          aria-label={isInWishlist ? `Remove ${movie.title} from watchlist` : `Add ${movie.title} to watchlist`}
+          aria-label={isInWishlist ? `Remove ${movie.title} from wishlist` : `Add ${movie.title} to wishlist`}
           aria-pressed={isInWishlist}
         >
-          <Bookmark size={18} fill={isInWishlist ? 'currentColor' : 'none'} />
+          <Bookmark size={15} fill={isInWishlist ? 'currentColor' : 'none'} />
         </button>
       )}
 
@@ -49,20 +50,22 @@ export const MovieCard: React.FC<MovieCardProps> = ({
               loading="lazy"
             />
           ) : (
-            <div className={styles.placeholder}>No Poster Available</div>
+            <div className={styles.placeholder}>No Poster</div>
           )}
+
+          {movie.rating && movie.rating > 0 ? (
+            <div className={styles.ratingBadge}>
+              <Star size={11} fill="currentColor" />
+              <span>{movie.rating.toFixed(1)}</span>
+            </div>
+          ) : null}
         </div>
 
         <div className={styles.content}>
           <h3 className={styles.title}>{movie.title}</h3>
+
           <div className={styles.meta}>
-            <span>{movie.releaseYear || 'N/A'}</span>
-            {movie.rating && (
-              <div className={styles.rating}>
-                <Star size={14} fill="currentColor" />
-                <span>{movie.rating.toFixed(1)}</span>
-              </div>
-            )}
+            <span>{movie.releaseYear || 'Cinema'}</span>
           </div>
         </div>
       </Link>

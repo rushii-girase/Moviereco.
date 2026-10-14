@@ -1,5 +1,6 @@
 package com.moviesuggestion.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 
@@ -11,6 +12,7 @@ public class ListItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "list_id", nullable = false)
     private CustomList customList;
@@ -50,6 +52,7 @@ public class ListItem {
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+    @JsonIgnore
     public CustomList getCustomList() { return customList; }
     public void setCustomList(CustomList customList) { this.customList = customList; }
     public Integer getTmdbId() { return tmdbId; }

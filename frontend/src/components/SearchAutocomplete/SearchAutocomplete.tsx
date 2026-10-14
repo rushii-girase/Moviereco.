@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, X, Film, Tv, User as UserIcon } from 'lucide-react';
+import { Search, X, Film, Tv, Star } from 'lucide-react';
+import styles from './SearchAutocomplete.module.css';
 
 const TMDB_BASE = 'https://api.themoviedb.org/3';
+
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY || '';
 
 interface SearchResult {
@@ -19,41 +21,67 @@ interface SearchResult {
 
 export const SearchAutocomplete: React.FC = () => {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<SearchResult[]>([]);
-  const [isOpen, setIsOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
-  const inputRef = useRef<HTMLInputElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
-  // Close on outside click
+  const [results, setResults] = useState<SearchResult[]>([]);
+
+  const [isOpen, setIsOpen] = useState(false);
+
+  const [loading, setLoading] = useState(false);
+
+  const navigate = useNavigate();
+
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
   useEffect(() => {
     const handler = (e: MouseEvent) => {
+      // SAFETY: DOM click event target implements the Node interface
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setIsOpen(false);
       }
     };
+
     document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+
+    return () => {
+      document.removeEventListener('mousedown', handler);
+    };
   }, []);
 
   const handleSearch = (value: string) => {
     setQuery(value);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
 
     if (value.trim().length < 2) {
       setResults([]);
       setIsOpen(false);
+
       return;
     }
 
     debounceRef.current = setTimeout(async () => {
       setLoading(true);
+
       try {
-        const res = await fetch(`${TMDB_BASE}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(value.trim())}&page=1`);
+        const res = await fetch(
+          `${TMDB_BASE}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(value.trim())}&page=1`,
+        );
+
+        if (!res.ok) {
+          throw new Error('Search failed');
+        }
+
         const data = await res.json();
-        setResults((data.results || []).slice(0, 8));
+
+        const validResults = (data.results || []).filter(
+          (item: SearchResult) => item.media_type === 'movie' || item.media_type === 'tv',
+        );
+
+        setResults(validResults.slice(0, 8));
         setIsOpen(true);
       } catch (err) {
         console.error(err);
@@ -66,129 +94,113 @@ export const SearchAutocomplete: React.FC = () => {
   const handleSelect = (result: SearchResult) => {
     setIsOpen(false);
     setQuery('');
-    if (result.media_type === 'person') {
-      // Could navigate to person page, for now stay
-      return;
-    }
+
     const mediaType = result.media_type === 'tv' ? 'tv' : 'movie';
+
     navigate(`/movie/${result.id}?type=${mediaType}`);
   };
 
-  const getIcon = (type: string) => {
-    switch (type) {
-      case 'movie': return <Film size={14} />;
-      case 'tv': return <Tv size={14} />;
-      case 'person': return <UserIcon size={14} />;
-      default: return <Film size={14} />;
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Escape') {
+      setIsOpen(false);
     }
   };
 
-  const getImageUrl = (result: SearchResult) => {
-    const path = result.poster_path || result.profile_path;
-    return path ? `https://image.tmdb.org/t/p/w92${path}` : null;
+  const clearQuery = () => {
+    setQuery('');
+    setResults([]);
+    setIsOpen(false);
   };
 
   return (
-    <div ref={containerRef} style={{ position: 'relative', width: '100%', maxWidth: '360px' }}>
-      <div style={{
-        display: 'flex', alignItems: 'center',
-        backgroundColor: 'var(--color-surface-muted)',
-        border: '1px solid var(--color-border-subtle)',
-        borderRadius: 'var(--radius-sm)',
-        padding: '0 var(--space-6)',
-        transition: 'border-color var(--motion-duration-instant)',
-      }}>
-        <Search size={16} style={{ color: 'var(--color-text-tertiary)', flexShrink: 0 }} />
+    <div ref={containerRef} className={styles.wrapper}>
+      <div className={styles.searchBar}>
+        <Search size={16} className={styles.searchIcon} />
         <input
-          ref={inputRef}
           type="text"
+          className={styles.input}
+          placeholder="Search films, series, auteurs..."
           value={query}
           onChange={(e) => handleSearch(e.target.value)}
-          onFocus={() => results.length > 0 && setIsOpen(true)}
-          placeholder="Search movies, TV, people…"
-          style={{
-            flex: 1, border: 'none', background: 'transparent',
-            padding: 'var(--space-5) var(--space-6)',
-            color: 'var(--color-text-secondary)',
-            fontSize: 'var(--font-size-sm)',
-            outline: 'none',
+          onKeyDown={handleKeyDown}
+          onFocus={() => {
+            if (results.length > 0) {
+              setIsOpen(true);
+            }
           }}
+          aria-label="Search movies and series"
         />
         {query && (
           <button
-            onClick={() => { setQuery(''); setResults([]); setIsOpen(false); }}
-            style={{ background: 'none', border: 'none', color: 'var(--color-text-tertiary)', cursor: 'pointer', padding: '2px' }}
+            type="button"
+            className={styles.clearBtn}
+            onClick={clearQuery}
+            aria-label="Clear search"
           >
-            <X size={14} />
+            <X size={15} />
           </button>
         )}
       </div>
 
-      {/* Dropdown */}
       {isOpen && (
-        <div style={{
-          position: 'absolute', top: '100%', left: 0, right: 0,
-          backgroundColor: 'var(--color-surface-raised)',
-          border: '1px solid var(--color-border-subtle)',
-          borderRadius: 'var(--radius-sm)',
-          marginTop: '4px',
-          maxHeight: '400px', overflowY: 'auto',
-          zIndex: 100,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-        }}>
-          {loading && (
-            <div style={{ padding: 'var(--space-6) var(--space-8)', color: 'var(--color-text-tertiary)', fontSize: 'var(--font-size-sm)' }}>
-              Searching…
-            </div>
-          )}
-          {!loading && results.length === 0 && (
-            <div style={{ padding: 'var(--space-6) var(--space-8)', color: 'var(--color-text-tertiary)', fontSize: 'var(--font-size-sm)' }}>
-              No results found
-            </div>
-          )}
-          {results.map((result) => {
-            const imgUrl = getImageUrl(result);
-            const title = result.title || result.name || '';
-            const year = (result.release_date || result.first_air_date)?.split('-')[0];
+        <div className={styles.dropdown} role="listbox">
+          {loading && results.length === 0 ? (
+            <div className={styles.emptyState}>Searching library...</div>
+          ) : results.length > 0 ? (
+            results.map((result) => {
+              const displayTitle = result.title || result.name || 'Untitled';
+              const releaseDate = result.release_date || result.first_air_date;
+              const year = releaseDate ? releaseDate.slice(0, 4) : '';
+              const isTv = result.media_type === 'tv';
 
-            return (
-              <button
-                key={`${result.media_type}-${result.id}`}
-                onClick={() => handleSelect(result)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 'var(--space-6)',
-                  width: '100%', padding: 'var(--space-5) var(--space-8)',
-                  background: 'transparent', border: 'none',
-                  borderBottom: '1px solid var(--color-border-subtle)',
-                  cursor: 'pointer', textAlign: 'left',
-                  transition: 'background var(--motion-duration-instant)',
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--color-surface-muted)')}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-              >
-                {imgUrl ? (
-                  <img src={imgUrl} alt="" style={{ width: '36px', height: '54px', borderRadius: '4px', objectFit: 'cover', flexShrink: 0 }} />
-                ) : (
-                  <div style={{ width: '36px', height: '54px', borderRadius: '4px', backgroundColor: 'var(--color-surface-muted)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {getIcon(result.media_type)}
+              const poster = result.poster_path
+                ? `https://image.tmdb.org/t/p/w92${result.poster_path}`
+                : null;
+
+              return (
+                <button
+                  key={`${result.media_type}-${result.id}`}
+                  type="button"
+                  className={styles.item}
+                  onClick={() => handleSelect(result)}
+                  role="option"
+                  aria-selected="false"
+                >
+                  {poster ? (
+                    <img
+                      src={poster}
+                      alt={displayTitle}
+                      className={styles.thumbnail}
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className={styles.placeholderThumb}>
+                      {isTv ? <Tv size={16} /> : <Film size={16} />}
+                    </div>
+                  )}
+
+                  <div className={styles.info}>
+                    <span className={styles.title}>{displayTitle}</span>
+                    <div className={styles.metaRow}>
+                      <span className={styles.badge}>
+                        {isTv ? <Tv size={10} /> : <Film size={10} />}
+                        {isTv ? 'Series' : 'Film'}
+                      </span>
+                      {year && <span>{year}</span>}
+                      {result.vote_average && result.vote_average > 0 ? (
+                        <span className={styles.rating}>
+                          <Star size={11} fill="currentColor" />
+                          {result.vote_average.toFixed(1)}
+                        </span>
+                      ) : null}
+                    </div>
                   </div>
-                )}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {title}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-tertiary)', marginTop: '2px' }}>
-                    {getIcon(result.media_type)}
-                    <span style={{ textTransform: 'capitalize' }}>{result.media_type}</span>
-                    {year && <span>· {year}</span>}
-                    {result.vote_average != null && result.vote_average > 0 && (
-                      <span>· ⭐ {result.vote_average.toFixed(1)}</span>
-                    )}
-                  </div>
-                </div>
-              </button>
-            );
-          })}
+                </button>
+              );
+            })
+          ) : (
+            <div className={styles.emptyState}>No titles found for &ldquo;{query}&rdquo;</div>
+          )}
         </div>
       )}
     </div>

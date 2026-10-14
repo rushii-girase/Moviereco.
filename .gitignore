@@ -41,6 +41,7 @@ target/
 # Temporary & system generated
 .system_generated/
 scratch/
+.archify/
 
 # Skills & local agent configurations
 .agents/

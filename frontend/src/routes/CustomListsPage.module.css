@@ -1,0 +1,148 @@
+.container {
+  max-width: var(--layout-max-width);
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-10) var(--space-13) var(--space-10);
+  width: 100%;
+}
+
+.header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: var(--space-10);
+  padding-bottom: var(--space-6);
+  border-bottom: 1px solid var(--color-border-subtle);
+  flex-wrap: wrap;
+  gap: var(--space-6);
+}
+
+.titleArea {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.title {
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-2xl);
+  color: var(--color-text-secondary);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.subtitle {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.createBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 10px 20px;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent-gold);
+  color: #08090b;
+  font-weight: 700;
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  border: none;
+  transition: all var(--motion-duration-instant) ease;
+}
+
+.createBtn:hover {
+  background: var(--color-accent-gold-hover);
+  transform: translateY(-2px);
+}
+
+.createModal {
+  background-color: var(--color-surface-card);
+  border: 1px solid var(--color-border-hover);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
+  margin-bottom: var(--space-10);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  box-shadow: var(--shadow-elevation);
+}
+
+.input {
+  background-color: var(--color-surface-muted);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  outline: none;
+}
+
+.input:focus {
+  border-color: var(--color-accent-gold);
+}
+
+.listsGrid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: var(--space-6);
+}
+
+@media (min-width: 768px) {
+  .listsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.listCard {
+  background-color: var(--color-surface-card);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  transition: all var(--motion-duration-normal) var(--motion-ease);
+}
+
+.listCard:hover {
+  border-color: var(--color-border-hover);
+  box-shadow: var(--shadow-card);
+}
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.listName {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+
+.publicBadge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  text-transform: uppercase;
+  background-color: rgba(229, 169, 60, 0.15);
+  color: var(--color-accent-gold);
+}
+
+.listDesc {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-primary);
+  line-height: 1.6;
+}
+
+.emptyNotice {
+  text-align: center;
+  padding: var(--space-13) var(--space-10);
+  background-color: var(--color-surface-card);
+  border: 1px dashed var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  color: var(--color-text-primary);
+}

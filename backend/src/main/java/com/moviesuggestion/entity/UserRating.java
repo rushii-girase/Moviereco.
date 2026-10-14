@@ -1,5 +1,7 @@
 package com.moviesuggestion.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 
@@ -11,6 +13,7 @@ public class UserRating {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -57,8 +60,14 @@ public class UserRating {
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+    @JsonIgnore
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }
+
+    @JsonProperty("userName")
+    public String getUserName() {
+        return user != null ? user.getName() : null;
+    }
     public Integer getTmdbId() { return tmdbId; }
     public void setTmdbId(Integer tmdbId) { this.tmdbId = tmdbId; }
     public String getMediaType() { return mediaType; }
