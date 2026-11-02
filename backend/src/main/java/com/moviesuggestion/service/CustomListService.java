@@ -83,26 +83,39 @@ public class CustomListService {
     public ListItem addItemToList(Long listId, Long userId, ListItemDto dto) {
         CustomList list = getListById(listId, userId);
 
-        if (itemRepository.existsByCustomListIdAndTmdbIdAndMediaType(listId, dto.getTmdbId(), dto.getMediaType())) {
+        String mediaType = (dto.getMediaType() != null && !dto.getMediaType().isBlank()) ? dto.getMediaType() : "movie";
+
+        if (itemRepository.existsByCustomListIdAndTmdbIdAndMediaType(listId, dto.getTmdbId(), mediaType)) {
             throw new RuntimeException("Item already in list");
         }
 
         ListItem item = ListItem.builder()
                 .customList(list)
                 .tmdbId(dto.getTmdbId())
-                .mediaType(dto.getMediaType() != null ? dto.getMediaType() : "movie")
+                .mediaType(mediaType)
                 .title(dto.getTitle())
                 .posterPath(dto.getPosterPath())
                 .sortOrder(dto.getSortOrder() != null ? dto.getSortOrder() : 0)
                 .build();
 
-        return itemRepository.save(item);
+        ListItem saved = itemRepository.save(item);
+        if (list.getItems() != null) {
+            list.getItems().add(saved);
+        }
+        return saved;
     }
 
     @Transactional
     public void removeItemFromList(Long listId, Long userId, Integer tmdbId, String mediaType) {
-        getListById(listId, userId); // verify ownership
-        itemRepository.deleteByCustomListIdAndTmdbIdAndMediaType(listId, tmdbId, mediaType);
+        CustomList list = getListById(listId, userId); // verify ownership
+        String resolvedMediaType = (mediaType != null && !mediaType.isBlank()) ? mediaType : "movie";
+        if (list.getItems() != null) {
+            list.getItems().removeIf(item ->
+                item.getTmdbId() != null && item.getTmdbId().equals(tmdbId) &&
+                resolvedMediaType.equalsIgnoreCase(item.getMediaType())
+            );
+        }
+        itemRepository.deleteByCustomListIdAndTmdbIdAndMediaType(listId, tmdbId, resolvedMediaType);
     }
 
     public List<ListItem> getListItems(Long listId) {

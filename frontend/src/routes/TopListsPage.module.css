@@ -40,24 +40,24 @@
   align-items: center;
   background-color: var(--color-surface-muted);
   border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-pill);
-  padding: 4px;
-  gap: 4px;
+  border-radius: var(--radius-sm);
+  padding: 3px;
+  gap: 3px;
 }
 
 .tabBtn {
   display: inline-flex;
   align-items: center;
   gap: var(--space-3);
-  padding: 8px 18px;
-  border-radius: var(--radius-pill);
+  padding: 6px 14px;
+  border-radius: var(--radius-xs);
   background: transparent;
   border: none;
   color: var(--color-text-primary);
   font-size: var(--font-size-xs);
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
-  transition: all var(--motion-duration-instant) ease;
+  transition: color var(--motion-duration-instant) ease, background-color var(--motion-duration-instant) ease;
 }
 
 .tabBtn:hover {
@@ -68,7 +68,6 @@
   background-color: var(--color-surface-raised);
   color: var(--color-accent-gold);
   border: 1px solid var(--color-border-subtle);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 /* Person Grid */

@@ -1,79 +1,79 @@
-/* Cinema Grade Design Tokens */
+/* Repertory Cinema Design Tokens */
 :root {
-  /* Surfaces - 35mm Obsidian & Deep Graphite */
-  --color-surface-base: #08090b;
-  --color-surface-muted: #0e1116;
-  --color-surface-raised: #151922;
-  --color-surface-card: #14171f;
-  --color-surface-card-hover: #1b202a;
-  --color-surface-overlay: rgba(8, 9, 11, 0.88);
+  /* Surfaces - 35mm Neutral Graphite Ramp */
+  --color-surface-base: #090a0d;
+  --color-surface-muted: #101217;
+  --color-surface-raised: #161820;
+  --color-surface-card: #13151c;
+  --color-surface-card-hover: #181b24;
+  --color-surface-overlay: rgba(9, 10, 13, 0.92);
 
-  /* Text & Readability */
-  --color-text-secondary: #f3f5f8;
-  --color-text-primary: #9da6b4;
-  --color-text-tertiary: #5d6776;
+  /* Text Roles */
+  --color-text-secondary: #f4f5f8; /* Crisp primary reading & headings */
+  --color-text-primary: #9ca3af;   /* Muted secondary body */
+  --color-text-tertiary: #606b7d;  /* Archival metadata & captions */
 
-  /* Cinema Gold & Accents */
-  --color-text-inverse: #e5a93c;
-  --color-accent-gold: #e5a93c;
-  --color-accent-gold-hover: #f3b74d;
-  --color-accent-gold-glow: rgba(229, 169, 60, 0.16);
-  --color-accent-gold-border: rgba(229, 169, 60, 0.4);
+  /* Single Cinema Gold Accent */
+  --color-text-inverse: #d99b26;
+  --color-accent-gold: #d99b26;
+  --color-accent-gold-hover: #e5a93c;
+  --color-accent-gold-border: rgba(217, 155, 38, 0.35);
 
-  /* Subtle Borders & Dividers */
-  --color-border-strong: rgba(255, 255, 255, 0.2);
+  /* Hairlines & Dividers */
+  --color-border-strong: rgba(255, 255, 255, 0.14);
   --color-border-subtle: rgba(255, 255, 255, 0.08);
-  --color-border-hover: rgba(255, 255, 255, 0.16);
-  --color-focus-ring: #e5a93c;
+  --color-border-hover: rgba(255, 255, 255, 0.15);
+  --color-focus-ring: #d99b26;
 
   /* State Colors */
-  --color-state-error: #f87171;
-  --color-state-success: #34d399;
+  --color-state-error: #ef4444;
+  --color-state-success: #10b981;
   --color-state-info: #38bdf8;
 
   /* Typography */
   --font-family-stack: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-family-display: 'Cinzel', serif;
+  --font-family-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --font-size-xs: 11px;
-  --font-size-sm: 12.5px;
+  --font-size-sm: 13px;
   --font-size-base: 14px;
   --font-size-md: 15px;
   --font-size-lg: 18px;
   --font-size-xl: 22px;
-  --font-size-2xl: 30px;
-  --font-size-3xl: 42px;
-  --line-height-base: 1.6;
+  --font-size-2xl: 28px;
+  --font-size-3xl: 38px;
+  --line-height-base: 1.55;
 
-  /* Spacing Scale */
+  /* Spacing Scale (Strict 4px multiples) */
   --space-1: 2px;
   --space-2: 4px;
   --space-3: 6px;
   --space-4: 8px;
-  --space-5: 10px;
+  --space-5: 12px;
   --space-6: 12px;
-  --space-7: 14px;
+  --space-7: 16px;
   --space-8: 16px;
   --space-9: 20px;
   --space-10: 24px;
   --space-11: 32px;
   --space-12: 40px;
-  --space-13: 56px;
+  --space-13: 48px;
 
-  /* Border Radius */
+  /* Nested Border Radii */
   --radius-xs: 4px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 18px;
-  --radius-xl: 24px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
   --radius-pill: 9999px;
 
   /* Layout & Motion */
-  --layout-max-width: 1260px;
+  --layout-max-width: 1280px;
   --motion-duration-instant: 150ms;
-  --motion-duration-normal: 250ms;
-  --motion-ease: cubic-bezier(0.16, 1, 0.3, 1);
-  --shadow-card: 0 10px 30px -10px rgba(0, 0, 0, 0.6);
-  --shadow-elevation: 0 20px 40px -15px rgba(0, 0, 0, 0.8);
+  --motion-duration-normal: 200ms;
+  --motion-ease: cubic-bezier(0.2, 0, 0, 1);
+  --shadow-card: none;
+  --shadow-elevation: none;
 }
 
 /* Base Resets */

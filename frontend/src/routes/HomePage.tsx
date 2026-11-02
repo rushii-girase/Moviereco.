@@ -8,7 +8,7 @@ import {
 } from '../api/tmdb';
 import { MovieGrid } from '../components/MovieGrid/MovieGrid';
 import type { Movie } from '../components/MovieCard/MovieCard';
-import { Sparkles, Calendar, Star, Film, Bookmark, ChevronRight } from 'lucide-react';
+import { Calendar, Star, Film, Bookmark, ChevronRight } from 'lucide-react';
 import styles from './HomePage.module.css';
 
 interface FeaturedMovie extends Movie {
@@ -66,12 +66,7 @@ export const HomePage: React.FC = () => {
 
         if (trendData.length > 0) {
           const topPick = trendData[0];
-
-          setFeatured({
-            ...topPick,
-            overview:
-              'Experience an acclaimed cinematic work leading world audiences this week. Explore directors, ratings, and behind-the-scenes artistry.',
-          });
+          setFeatured(topPick);
         }
       } catch (err) {
         console.error(err);
@@ -107,13 +102,15 @@ export const HomePage: React.FC = () => {
 
   const isFeaturedInWishlist = featured ? wishlistIds.includes(featured.id) : false;
 
-  const heroBackdropUrl = featured?.posterPath
+  const heroBackdropUrl = featured?.backdropPath
+    ? `https://image.tmdb.org/t/p/original${featured.backdropPath}`
+    : featured?.posterPath
     ? `https://image.tmdb.org/t/p/original${featured.posterPath}`
     : null;
 
   return (
     <div className={styles.container}>
-      {/* Cinematic Spotlight Hero */}
+      {/* Featured Archival Presentation */}
       {featured && (
         <section className={styles.hero} aria-label="Featured Film">
           {heroBackdropUrl && (
@@ -127,29 +124,31 @@ export const HomePage: React.FC = () => {
           <div className={styles.heroOverlay} />
 
           <div className={styles.heroContent}>
-            <div className={styles.spotlightPill}>
-              <Sparkles size={13} />
-              <span>Spotlight Masterpiece</span>
+            <div className={styles.spotlightTag}>
+              <span className={styles.signatureIndex}>35MM ARCHIVE</span>
+              <span className={styles.signatureDot}>•</span>
+              <span>Featured Presentation</span>
             </div>
 
             <h1 className={styles.heroTitle}>{featured.title}</h1>
 
             <div className={styles.heroMeta}>
-              {featured.releaseYear && <span>{featured.releaseYear}</span>}
+              {featured.releaseYear && <span className={styles.metaYear}>{featured.releaseYear}</span>}
               {featured.rating && featured.rating > 0 && (
                 <div className={styles.heroRating}>
-                  <Star size={15} fill="currentColor" />
-                  <span>{featured.rating.toFixed(1)} TMDB Score</span>
+                  <Star size={13} fill="currentColor" />
+                  <span className={styles.ratingValue}>{featured.rating.toFixed(1)}</span>
+                  <span className={styles.ratingScale}>/ 10</span>
                 </div>
               )}
             </div>
 
-            <p className={styles.heroOverview}>{featured.overview}</p>
+            {featured.overview && <p className={styles.heroOverview}>{featured.overview}</p>}
 
             <div className={styles.heroActions}>
               <Link to={`/movie/${featured.id}`} className={styles.primaryBtn}>
-                <Film size={16} />
-                <span>Explore Film</span>
+                <Film size={15} />
+                <span>Film Details</span>
               </Link>
 
               <button
@@ -158,7 +157,7 @@ export const HomePage: React.FC = () => {
                 onClick={(e) => handleToggleWishlist(featured.id, e)}
               >
                 <Bookmark
-                  size={16}
+                  size={15}
                   fill={isFeaturedInWishlist ? 'currentColor' : 'none'}
                 />
                 <span>
@@ -174,12 +173,12 @@ export const HomePage: React.FC = () => {
       <section className={styles.section}>
         <div className={styles.sectionHeader}>
           <h2 className={styles.sectionTitle}>
-            <Calendar size={18} className={styles.sectionIcon} />
-            <span>Theatrical Premieres &amp; Upcoming</span>
+            <Calendar size={16} className={styles.sectionIcon} />
+            <span>Upcoming Releases</span>
           </h2>
           <Link to="/discover" className={styles.viewAllLink}>
-            <span>View All</span>
-            <ChevronRight size={14} style={{ verticalAlign: 'middle' }} />
+            <span>View all</span>
+            <ChevronRight size={14} />
           </Link>
         </div>
 
@@ -191,16 +190,16 @@ export const HomePage: React.FC = () => {
         />
       </section>
 
-      {/* Trending in World Cinema */}
+      {/* Trending This Week */}
       <section className={styles.section}>
         <div className={styles.sectionHeader}>
           <h2 className={styles.sectionTitle}>
-            <Sparkles size={18} className={styles.sectionIcon} />
-            <span>Trending in World Cinema</span>
+            <Film size={16} className={styles.sectionIcon} />
+            <span>Trending This Week</span>
           </h2>
           <Link to="/discover" className={styles.viewAllLink}>
-            <span>Explore More</span>
-            <ChevronRight size={14} style={{ verticalAlign: 'middle' }} />
+            <span>View all</span>
+            <ChevronRight size={14} />
           </Link>
         </div>
 
@@ -212,16 +211,16 @@ export const HomePage: React.FC = () => {
         />
       </section>
 
-      {/* Hall of Fame Masterpieces */}
+      {/* All-Time Top Rated */}
       <section className={styles.section}>
         <div className={styles.sectionHeader}>
           <h2 className={styles.sectionTitle}>
-            <Star size={18} className={styles.sectionIcon} />
-            <span>All-Time Acclaimed Masterpieces</span>
+            <Star size={16} className={styles.sectionIcon} />
+            <span>Top Rated</span>
           </h2>
           <Link to="/top-lists" className={styles.viewAllLink}>
-            <span>Top 250</span>
-            <ChevronRight size={14} style={{ verticalAlign: 'middle' }} />
+            <span>View all</span>
+            <ChevronRight size={14} />
           </Link>
         </div>
 
@@ -233,13 +232,17 @@ export const HomePage: React.FC = () => {
         />
       </section>
 
-      {/* Global Audience Favorites */}
+      {/* Popular Releases */}
       <section className={styles.section}>
         <div className={styles.sectionHeader}>
           <h2 className={styles.sectionTitle}>
-            <Film size={18} className={styles.sectionIcon} />
-            <span>Global Audience Favorites</span>
+            <Film size={16} className={styles.sectionIcon} />
+            <span>Popular Releases</span>
           </h2>
+          <Link to="/discover" className={styles.viewAllLink}>
+            <span>View all</span>
+            <ChevronRight size={14} />
+          </Link>
         </div>
 
         <MovieGrid

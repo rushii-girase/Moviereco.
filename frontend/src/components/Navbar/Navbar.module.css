@@ -49,35 +49,30 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  background-color: rgba(255, 255, 255, 0.03);
-  padding: 4px;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--color-border-subtle);
 }
 
 .navLink {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-3);
-  padding: 6px var(--space-6);
-  border-radius: var(--radius-pill);
+  gap: var(--space-4);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
   color: var(--color-text-primary);
   font-size: var(--font-size-sm);
   font-weight: 500;
   text-decoration: none;
-  transition: all var(--motion-duration-instant) ease;
+  transition: color var(--motion-duration-instant) ease, background-color var(--motion-duration-instant) ease;
 }
 
 .navLink:hover {
   color: var(--color-text-secondary);
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: rgba(255, 255, 255, 0.04);
 }
 
 .navLink.active {
   color: var(--color-text-secondary);
   background-color: var(--color-surface-raised);
   border: 1px solid var(--color-border-subtle);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 .active .navIcon {
@@ -100,19 +95,18 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-3);
-  padding: 7px var(--space-7);
-  border-radius: var(--radius-pill);
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
   background-color: var(--color-surface-raised);
   border: 1px solid var(--color-border-subtle);
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
-  font-weight: 600;
-  transition: all var(--motion-duration-instant) ease;
+  font-weight: 500;
+  transition: border-color var(--motion-duration-instant) ease, background-color var(--motion-duration-instant) ease;
 }
 
 .signInBtn:hover {
-  border-color: var(--color-accent-gold-border);
-  color: var(--color-accent-gold);
+  border-color: var(--color-border-hover);
   background-color: var(--color-surface-card-hover);
 }
 

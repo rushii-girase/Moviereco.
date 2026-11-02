@@ -12,7 +12,7 @@
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-md);
   overflow: hidden;
-  transition: all var(--motion-duration-normal) var(--motion-ease);
+  transition: border-color var(--motion-duration-instant) ease, background-color var(--motion-duration-instant) ease;
   text-decoration: none;
   color: inherit;
   height: 100%;
@@ -20,12 +20,7 @@
 
 .card:hover {
   border-color: var(--color-border-hover);
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-card);
-}
-
-.card:hover .poster {
-  transform: scale(1.04);
+  background-color: var(--color-surface-card-hover);
 }
 
 .posterWrapper {
@@ -40,7 +35,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform var(--motion-duration-normal) var(--motion-ease);
+  display: block;
 }
 
 .placeholder {
@@ -53,7 +48,7 @@
   font-size: var(--font-size-xs);
   text-align: center;
   padding: var(--space-6);
-  background-color: #12151c;
+  background-color: var(--color-surface-muted);
 }
 
 .ratingBadge {
@@ -63,13 +58,14 @@
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  background-color: rgba(8, 9, 11, 0.85);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: var(--radius-pill);
-  padding: 3px 8px;
+  background-color: rgba(9, 10, 13, 0.88);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-xs);
+  padding: 2px 6px;
   font-size: var(--font-size-xs);
-  font-weight: 700;
+  font-family: var(--font-family-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
   color: var(--color-accent-gold);
   z-index: 2;
 }
@@ -79,46 +75,43 @@
   top: var(--space-3);
   right: var(--space-3);
   z-index: 5;
-  background-color: rgba(8, 9, 11, 0.75);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background-color: rgba(9, 10, 13, 0.75);
+  border: 1px solid var(--color-border-subtle);
   color: var(--color-text-primary);
-  border-radius: 50%;
-  width: 34px;
-  height: 34px;
+  border-radius: var(--radius-sm);
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all var(--motion-duration-instant) ease;
+  transition: border-color var(--motion-duration-instant) ease, background-color var(--motion-duration-instant) ease, color var(--motion-duration-instant) ease;
 }
 
 .wishlistBtn:hover {
   background-color: var(--color-surface-raised);
   color: var(--color-text-secondary);
   border-color: var(--color-border-hover);
-  transform: scale(1.08);
 }
 
 .wishlistBtn.active {
   background-color: var(--color-accent-gold);
   border-color: var(--color-accent-gold);
-  color: #08090b;
+  color: #090a0d;
 }
 
 .content {
-  padding: var(--space-6) var(--space-6) var(--space-7) var(--space-6);
+  padding: 12px 12px 14px 12px;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
   flex-grow: 1;
-  background-color: var(--color-surface-card);
 }
 
 .title {
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.35;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -128,7 +121,7 @@
 }
 
 .card:hover .title {
-  color: #ffffff;
+  color: var(--color-text-secondary);
 }
 
 .meta {
@@ -136,6 +129,7 @@
   align-items: center;
   justify-content: space-between;
   color: var(--color-text-tertiary);
+  font-family: var(--font-family-mono);
   font-size: var(--font-size-xs);
   margin-top: auto;
 }

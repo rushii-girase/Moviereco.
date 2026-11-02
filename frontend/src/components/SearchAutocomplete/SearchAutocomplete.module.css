@@ -7,19 +7,18 @@
 .searchBar {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-3);
   background-color: var(--color-surface-muted);
   border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-pill);
-  padding: 0 var(--space-6);
-  height: 40px;
-  transition: all var(--motion-duration-normal) var(--motion-ease);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-4);
+  height: 34px;
+  transition: border-color var(--motion-duration-instant) ease, background-color var(--motion-duration-instant) ease;
 }
 
 .searchBar:focus-within {
-  border-color: var(--color-accent-gold);
+  border-color: var(--color-border-hover);
   background-color: var(--color-surface-raised);
-  box-shadow: 0 0 0 3px var(--color-accent-gold-glow);
 }
 
 .searchIcon {
@@ -64,21 +63,20 @@
 
 .dropdown {
   position: absolute;
-  top: calc(100% + var(--space-3));
+  top: calc(100% + var(--space-2));
   left: 0;
   right: 0;
-  background-color: rgba(21, 25, 34, 0.96);
-  backdrop-filter: blur(24px);
+  background-color: var(--color-surface-raised);
   border: 1px solid var(--color-border-hover);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-elevation);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
   z-index: 200;
   max-height: 420px;
   overflow-y: auto;
-  padding: var(--space-3);
+  padding: var(--space-2);
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: 2px;
 }
 
 .item {

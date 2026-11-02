@@ -52,31 +52,30 @@ export const LoginPage: React.FC = () => {
   const displayError = localError || error;
 
   return (
-    <div style={{ maxWidth: '440px', margin: '48px auto', padding: 'var(--space-6)' }}>
+    <div style={{ maxWidth: '400px', margin: '48px auto', padding: '0 var(--space-6)' }}>
       <div
         style={{
           backgroundColor: 'var(--color-surface-card)',
           border: '1px solid var(--color-border-subtle)',
-          borderRadius: 'var(--radius-xl)',
-          padding: 'var(--space-12) var(--space-10)',
-          boxShadow: 'var(--shadow-elevation)',
+          borderRadius: 'var(--radius-lg)',
+          padding: 'var(--space-10) var(--space-8)',
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 'var(--space-6)' }}>
-          <Film size={32} style={{ color: 'var(--color-accent-gold)' }} />
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 'var(--space-5)' }}>
+          <Film size={26} style={{ color: 'var(--color-accent-gold)' }} />
         </div>
 
         <h1
           style={{
             fontFamily: 'var(--font-family-display)',
-            fontSize: 'var(--font-size-2xl)',
+            fontSize: 'var(--font-size-xl)',
             color: 'var(--color-text-secondary)',
             marginBottom: 'var(--space-2)',
             textAlign: 'center',
-            letterSpacing: '0.04em',
+            letterSpacing: '0.01em',
           }}
         >
-          {isRegister ? 'Join the Cinematheque' : 'Sign In'}
+          {isRegister ? 'Create account' : 'Sign in'}
         </h1>
 
         <p
@@ -84,12 +83,12 @@ export const LoginPage: React.FC = () => {
             textAlign: 'center',
             fontSize: 'var(--font-size-sm)',
             color: 'var(--color-text-tertiary)',
-            marginBottom: 'var(--space-9)',
+            marginBottom: 'var(--space-8)',
           }}
         >
           {isRegister
-            ? 'Create an account to save personal watchlists, ratings, and custom anthologies.'
-            : 'Welcome back to your personal cinema archive.'}
+            ? 'Save personal watchlists, ratings, and curated lists'
+            : 'Access your watchlist and ratings'}
         </p>
 
         {displayError && (
@@ -216,20 +215,19 @@ export const LoginPage: React.FC = () => {
             disabled={loading}
             style={{
               marginTop: 'var(--space-4)',
-              padding: '12px var(--space-6)',
+              padding: '10px var(--space-6)',
               backgroundColor: 'var(--color-accent-gold)',
-              color: '#08090b',
-              fontWeight: 700,
+              color: '#090a0d',
+              fontWeight: 600,
               fontSize: 'var(--font-size-sm)',
-              borderRadius: 'var(--radius-pill)',
+              borderRadius: 'var(--radius-sm)',
               border: 'none',
               cursor: loading ? 'not-allowed' : 'pointer',
               opacity: loading ? 0.7 : 1,
-              transition: 'all var(--motion-duration-instant) ease',
-              boxShadow: '0 4px 16px rgba(229, 169, 60, 0.3)',
+              transition: 'background-color var(--motion-duration-instant) ease',
             }}
           >
-            {loading ? 'Processing...' : isRegister ? 'Create Account' : 'Sign In'}
+            {loading ? 'Processing...' : isRegister ? 'Create account' : 'Sign in'}
           </button>
         </form>
 

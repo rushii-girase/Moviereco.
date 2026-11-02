@@ -119,7 +119,7 @@ export const SearchAutocomplete: React.FC = () => {
         <input
           type="text"
           className={styles.input}
-          placeholder="Search films, series, auteurs..."
+          placeholder="Search films, directors..."
           value={query}
           onChange={(e) => handleSearch(e.target.value)}
           onKeyDown={handleKeyDown}

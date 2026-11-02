@@ -82,13 +82,13 @@ export const WishlistPage: React.FC = () => {
   const isEmpty = wishlistIds.length === 0;
 
   return (
-    <div style={{ maxWidth: 'var(--layout-max-width)', margin: '0 auto', padding: 'var(--space-8) var(--space-10) var(--space-13) var(--space-10)' }}>
-      <header style={{ marginBottom: 'var(--space-10)', paddingBottom: 'var(--space-6)', borderBottom: '1px solid var(--color-border-subtle)' }}>
-        <h1 style={{ fontFamily: 'var(--font-family-display)', fontSize: 'var(--font-size-2xl)', color: 'var(--color-text-secondary)', fontWeight: 700, letterSpacing: '0.02em', marginBottom: 'var(--space-2)' }}>
-          My Cinema Watchlist
+    <div style={{ maxWidth: 'var(--layout-max-width)', margin: '0 auto', padding: 'var(--space-8) var(--space-8) var(--space-12) var(--space-8)' }}>
+      <header style={{ marginBottom: 'var(--space-8)', paddingBottom: 'var(--space-4)', borderBottom: '1px solid var(--color-border-subtle)' }}>
+        <h1 style={{ fontFamily: 'var(--font-family-display)', fontSize: 'var(--font-size-xl)', color: 'var(--color-text-secondary)', fontWeight: 600, letterSpacing: '0.01em', marginBottom: 'var(--space-2)' }}>
+          Watchlist
         </h1>
-        <p style={{ color: 'var(--color-text-primary)', fontSize: 'var(--font-size-sm)' }}>
-          Saved titles queued for upcoming screenings ({wishlistIds.length} titles).
+        <p style={{ color: 'var(--color-text-tertiary)', fontSize: 'var(--font-size-sm)', fontFamily: 'var(--font-family-mono)' }}>
+          {wishlistIds.length} {wishlistIds.length === 1 ? 'title' : 'titles'} saved
         </p>
       </header>
 
@@ -96,23 +96,23 @@ export const WishlistPage: React.FC = () => {
         <div
           style={{
             textAlign: 'center',
-            padding: 'var(--space-13) var(--space-10)',
+            padding: 'var(--space-12) var(--space-8)',
             backgroundColor: 'var(--color-surface-card)',
-            border: '1px dashed var(--color-border-subtle)',
-            borderRadius: 'var(--radius-lg)',
+            border: '1px solid var(--color-border-subtle)',
+            borderRadius: 'var(--radius-md)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: 'var(--space-5)',
+            gap: 'var(--space-4)',
           }}
         >
-          <Bookmark size={40} style={{ color: 'var(--color-text-tertiary)' }} />
+          <Bookmark size={32} style={{ color: 'var(--color-text-tertiary)' }} />
           <div>
-            <h2 style={{ fontSize: 'var(--font-size-lg)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-2)' }}>
-              Your Watchlist is Empty
+            <h2 style={{ fontSize: 'var(--font-size-md)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-2)', fontWeight: 500 }}>
+              Your watchlist is empty
             </h2>
-            <p style={{ color: 'var(--color-text-primary)', fontSize: 'var(--font-size-sm)', maxWidth: '440px' }}>
-              Explore world cinema, award winners, and cinematic eras to bookmark films for later viewing.
+            <p style={{ color: 'var(--color-text-primary)', fontSize: 'var(--font-size-sm)', maxWidth: '400px' }}>
+              Bookmark films from discover or top-rated lists to queue them here
             </p>
           </div>
 
@@ -122,16 +122,17 @@ export const WishlistPage: React.FC = () => {
               display: 'inline-flex',
               alignItems: 'center',
               gap: 'var(--space-3)',
-              backgroundColor: 'var(--color-accent-gold)',
-              color: '#08090b',
-              padding: '11px 24px',
-              borderRadius: 'var(--radius-pill)',
-              fontWeight: 700,
+              backgroundColor: 'var(--color-surface-raised)',
+              border: '1px solid var(--color-border-subtle)',
+              color: 'var(--color-text-secondary)',
+              padding: '8px 16px',
+              borderRadius: 'var(--radius-sm)',
+              fontWeight: 500,
               fontSize: 'var(--font-size-sm)',
             }}
           >
-            <Compass size={16} />
-            <span>Discover Masterpieces</span>
+            <Compass size={15} />
+            <span>Discover films</span>
           </Link>
         </div>
       ) : (

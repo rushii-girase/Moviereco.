@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Film, Bookmark, Trophy, List, LogOut, Compass, Sparkles, Layers } from 'lucide-react';
+import { Film, Bookmark, Trophy, List, LogOut, Compass, Layers } from 'lucide-react';
 import { SearchAutocomplete } from '../SearchAutocomplete/SearchAutocomplete';
 import { useAuth } from '../../context/useAuth';
 import styles from './Navbar.module.css';
@@ -12,7 +12,7 @@ export const Navbar: React.FC = () => {
     <header className={styles.header}>
       <div className={styles.container}>
         <NavLink to="/" className={styles.logo} aria-label="Moviereco Home">
-          <Film className={styles.logoIcon} size={22} />
+          <Film className={styles.logoIcon} size={20} />
           <span>MOVIE<span className={styles.logoAccent}>RECO</span></span>
         </NavLink>
 
@@ -23,8 +23,7 @@ export const Navbar: React.FC = () => {
             to="/"
             className={({ isActive }) => `${styles.navLink} ${isActive ? styles.active : ''}`}
           >
-            <Sparkles size={15} className={styles.navIcon} />
-            <span>Spotlight</span>
+            <span>Home</span>
           </NavLink>
 
           <NavLink
@@ -40,7 +39,7 @@ export const Navbar: React.FC = () => {
             className={({ isActive }) => `${styles.navLink} ${isActive ? styles.active : ''}`}
           >
             <Trophy size={15} className={styles.navIcon} />
-            <span>Hall of Fame</span>
+            <span>Top Rated</span>
           </NavLink>
 
           <NavLink
@@ -48,7 +47,7 @@ export const Navbar: React.FC = () => {
             className={({ isActive }) => `${styles.navLink} ${isActive ? styles.active : ''}`}
           >
             <Layers size={15} className={styles.navIcon} />
-            <span>Eras</span>
+            <span>Movements</span>
           </NavLink>
 
           <NavLink
@@ -56,7 +55,7 @@ export const Navbar: React.FC = () => {
             className={({ isActive }) => `${styles.navLink} ${isActive ? styles.active : ''}`}
           >
             <Trophy size={15} className={styles.navIcon} />
-            <span>Laurels</span>
+            <span>Awards</span>
           </NavLink>
 
           <NavLink
@@ -73,7 +72,7 @@ export const Navbar: React.FC = () => {
               className={({ isActive }) => `${styles.navLink} ${isActive ? styles.active : ''}`}
             >
               <List size={15} className={styles.navIcon} />
-              <span>Curation</span>
+              <span>My Lists</span>
             </NavLink>
           )}
         </nav>

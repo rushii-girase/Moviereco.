@@ -110,6 +110,8 @@ interface RawMediaItem {
   title?: string;
   name?: string;
   poster_path: string | null;
+  backdrop_path?: string | null;
+  overview?: string;
   release_date?: string;
   first_air_date?: string;
   vote_average?: number;
@@ -123,6 +125,8 @@ const formatMedia = (m: RawMediaItem, defaultType: 'movie' | 'tv' = 'movie') => 
     id: m.id,
     title: m.title || m.name || 'Untitled',
     posterPath: m.poster_path,
+    backdropPath: m.backdrop_path,
+    overview: m.overview,
     releaseYear: parsedYear,
     rating: m.vote_average,
     mediaType: m.title ? 'movie' : m.first_air_date ? 'tv' : defaultType,
